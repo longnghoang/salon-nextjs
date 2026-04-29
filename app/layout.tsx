@@ -1,14 +1,17 @@
-import { Geist, Geist_Mono } from "next/font/google"
+import { Playfair_Display, Outfit } from "next/font/google"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@/lib/utils";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'})
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  variable: '--font-playfair'
+})
 
-const fontMono = Geist_Mono({
+const outfit = Outfit({
   subsets: ["latin"],
-  variable: "--font-mono",
+  variable: "--font-outfit",
 })
 
 export default function RootLayout({
@@ -20,7 +23,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("antialiased", fontMono.variable, "font-sans", geist.variable)}
+      className={cn("antialiased", outfit.variable, "font-sans", playfair.variable)}
     >
       <body>
         <ThemeProvider>{children}</ThemeProvider>
