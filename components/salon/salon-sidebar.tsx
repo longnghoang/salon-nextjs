@@ -17,10 +17,10 @@ import { useState } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const links = [
-  { href: "/salon/orders", label: "Orders", icon: ShoppingCart },
-  { href: "/salon/products", label: "Products", icon: Package },
-  { href: "/salon/customers", label: "Customers", icon: Users },
-  { href: "/salon/reports", label: "Reports", icon: BarChart },
+  { href: "/orders", label: "Orders", icon: ShoppingCart },
+  { href: "/products", label: "Products", icon: Package },
+  { href: "/customers", label: "Customers", icon: Users },
+  { href: "/reports", label: "Reports", icon: BarChart },
 ];
 
 export function SalonSidebar() {
@@ -35,7 +35,7 @@ export function SalonSidebar() {
       )}
     >
       <div className="flex h-14 items-center border-b px-4">
-        <Link href="/salon" className="flex items-center gap-2 font-semibold">
+        <Link href="/" className="flex items-center gap-2 font-semibold">
           <Scissors className="h-6 w-6 shrink-0" />
           {!isCollapsed && <span className="truncate">Salon Admin</span>}
         </Link>

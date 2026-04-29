@@ -8,10 +8,10 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/s
 import { Menu, Scissors, ShoppingCart, Package, Users, BarChart } from "lucide-react";
 
 const links = [
-  { href: "/salon/orders", label: "Orders", icon: ShoppingCart },
-  { href: "/salon/products", label: "Products", icon: Package },
-  { href: "/salon/customers", label: "Customers", icon: Users },
-  { href: "/salon/reports", label: "Reports", icon: BarChart },
+  { href: "/orders", label: "Orders", icon: ShoppingCart },
+  { href: "/products", label: "Products", icon: Package },
+  { href: "/customers", label: "Customers", icon: Users },
+  { href: "/reports", label: "Reports", icon: BarChart },
 ];
 
 export function SalonHeader() {
@@ -29,7 +29,7 @@ export function SalonHeader() {
         <SheetContent side="left" className="flex flex-col">
           <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
           <nav className="grid gap-2 text-lg font-medium">
-            <Link href="/salon" className="flex items-center gap-2 text-lg font-semibold mb-4">
+            <Link href="/" className="flex items-center gap-2 text-lg font-semibold mb-4">
               <Scissors className="h-6 w-6" />
               <span>Salon Admin</span>
             </Link>
