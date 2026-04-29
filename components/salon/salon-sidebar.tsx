@@ -34,12 +34,22 @@ export function SalonSidebar() {
         isCollapsed ? "w-16" : "w-64"
       )}
     >
-      <div className="flex h-14 items-center border-b px-4">
+      <div className="flex h-14 lg:h-[60px] items-center border-b px-4">
         <Link href="/" className="flex items-center gap-2 font-semibold">
           <Scissors className="h-6 w-6 shrink-0" />
           {!isCollapsed && <span className="truncate">Salon Admin</span>}
         </Link>
       </div>
+
+      <Button
+        variant="outline"
+        size="icon"
+        className="absolute -right-3 top-4 lg:top-[18px] z-20 h-6 w-6 rounded-full"
+        onClick={() => setIsCollapsed(!isCollapsed)}
+      >
+        {isCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
+        <span className="sr-only">Toggle Sidebar</span>
+      </Button>
 
       <div className="flex-1 overflow-auto py-4">
         <nav className="grid gap-2 px-2">
@@ -90,17 +100,6 @@ export function SalonSidebar() {
         </nav>
       </div>
 
-      <div className="border-t p-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          className={cn("ml-auto flex justify-center", isCollapsed ? "w-full" : "w-10")}
-          onClick={() => setIsCollapsed(!isCollapsed)}
-        >
-          {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-          <span className="sr-only">Toggle Sidebar</span>
-        </Button>
-      </div>
     </div>
   );
 }
