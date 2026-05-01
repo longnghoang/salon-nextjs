@@ -11,12 +11,14 @@ import {
   BarChart,
   ChevronLeft,
   ChevronRight,
-  Scissors
+  Scissors,
+  LayoutDashboard
 } from "lucide-react";
 import { useState } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const links = [
+  { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/orders", label: "Orders", icon: ShoppingCart },
   { href: "/products", label: "Products", icon: Package },
   { href: "/customers", label: "Customers", icon: Users },
@@ -55,7 +57,7 @@ export function SalonSidebar() {
         <nav className="grid gap-2 px-2">
           {links.map((link) => {
             const Icon = link.icon;
-            const isActive = pathname.startsWith(link.href);
+            const isActive = link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
 
             if (isCollapsed) {
               return (

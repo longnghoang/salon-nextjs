@@ -4,7 +4,7 @@ import { authConfig } from './auth.config';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
-  // debug: true,
+  debug: true,
   providers: [
     AzureADB2C({
       clientId: process.env.AUTH_AZURE_AD_B2C_CLIENT_ID,
@@ -22,6 +22,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       token: `https://${process.env.AUTH_AZURE_AD_B2C_TENANT_NAME}.b2clogin.com/${process.env.AUTH_AZURE_AD_B2C_TENANT_NAME}.onmicrosoft.com/${process.env.AUTH_AZURE_AD_B2C_PRIMARY_USER_FLOW}/oauth2/v2.0/token`,
       jwks_endpoint: `https://${process.env.AUTH_AZURE_AD_B2C_TENANT_NAME}.b2clogin.com/${process.env.AUTH_AZURE_AD_B2C_TENANT_NAME}.onmicrosoft.com/${process.env.AUTH_AZURE_AD_B2C_PRIMARY_USER_FLOW}/discovery/v2.0/keys`,
+      profile(profile: { sub?: string; given_name?: string; name?: string; emails?: string[] }) {
+        return {
+          id: profile.sub,
+          name: profile.given_name || profile.name,
+          email: profile.emails?.[0] || null,
+          image: null,
+        };
+      },
     }),
   ],
 });
