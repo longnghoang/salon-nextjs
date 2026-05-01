@@ -16,13 +16,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       authorization: {
         url: `https://${process.env.AUTH_AZURE_AD_B2C_TENANT_NAME}.b2clogin.com/${process.env.AUTH_AZURE_AD_B2C_TENANT_NAME}.onmicrosoft.com/${process.env.AUTH_AZURE_AD_B2C_PRIMARY_USER_FLOW}/oauth2/v2.0/authorize`,
         params: {
-          scope: `offline_access openid profile ${process.env.AUTH_AZURE_AD_B2C_CLIENT_ID}`,
+          //scope: `offline_access openid profile ${process.env.AUTH_AZURE_AD_B2C_CLIENT_ID}`,
+          scope: `offline_access openid profile ${process.env.AUTH_AZURE_AD_B2C_DEMO_READ_SCOPE} ${process.env.AUTH_AZURE_AD_B2C_DEMO_WRITE_SCOPE}`,
           response_type: 'code',
         },
       },
       token: `https://${process.env.AUTH_AZURE_AD_B2C_TENANT_NAME}.b2clogin.com/${process.env.AUTH_AZURE_AD_B2C_TENANT_NAME}.onmicrosoft.com/${process.env.AUTH_AZURE_AD_B2C_PRIMARY_USER_FLOW}/oauth2/v2.0/token`,
       jwks_endpoint: `https://${process.env.AUTH_AZURE_AD_B2C_TENANT_NAME}.b2clogin.com/${process.env.AUTH_AZURE_AD_B2C_TENANT_NAME}.onmicrosoft.com/${process.env.AUTH_AZURE_AD_B2C_PRIMARY_USER_FLOW}/discovery/v2.0/keys`,
-      profile(profile: { sub?: string; given_name?: string; name?: string; emails?: string[] }) {
+      profile(profile: {
+        sub?: string;
+        given_name?: string;
+        name?: string;
+        emails?: string[];
+      }) {
         return {
           id: profile.sub,
           name: profile.given_name || profile.name,
