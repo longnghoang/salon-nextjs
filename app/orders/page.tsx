@@ -8,28 +8,47 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import type { Order } from '@/types/order';
+import { DatePickerFilter } from '@/components/orders/date-picker-filter';
 
-export default async function OrdersPage() {
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+export default async function OrdersPage(props: {
+  searchParams: SearchParams;
+}) {
+  const searchParams = await props.searchParams;
+
+  const startDate =
+    typeof searchParams.startDate === 'string'
+      ? searchParams.startDate
+      : undefined;
+  const endDate =
+    typeof searchParams.endDate === 'string' ? searchParams.endDate : undefined;
+
   let displayOrders: Order[] = [];
   let errorMsg = '';
 
   try {
-    const orders = await getOrders();
+    const orders = await getOrders({ startDate, endDate });
     // Display only 10 orders first
-    displayOrders = orders?.slice(0, 10) || [];
+    displayOrders = orders?.slice(0, 100) || [];
   } catch (error) {
     console.error('Failed to fetch orders:', error);
     errorMsg = 'Failed to load orders. Please try again later.';
   }
 
   return (
-    <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full animate-in fade-in duration-700">
-      <header className="border-b border-border pb-6 mt-4">
-        <h1 className="font-heading text-4xl tracking-tight text-foreground">Orders</h1>
-        <p className="text-muted-foreground mt-2">View and manage salon transactions and bookings.</p>
+    <div className="mx-auto flex w-full max-w-7xl animate-in flex-col gap-6 duration-700 fade-in">
+      <header className="mt-4 border-b border-border pb-6">
+        <h1 className="font-heading text-4xl tracking-tight text-foreground">
+          Orders
+        </h1>
+        <p className="mt-2 text-muted-foreground">
+          View and manage salon transactions and bookings.
+        </p>
       </header>
+      <DatePickerFilter />
 
-      <div className="border rounded-md">
+      <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
@@ -43,7 +62,10 @@ export default async function OrdersPage() {
           <TableBody>
             {errorMsg ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-6 text-destructive">
+                <TableCell
+                  colSpan={5}
+                  className="py-6 text-center text-destructive"
+                >
                   {errorMsg}
                 </TableCell>
               </TableRow>
@@ -74,7 +96,10 @@ export default async function OrdersPage() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
+                <TableCell
+                  colSpan={5}
+                  className="py-6 text-center text-muted-foreground"
+                >
                   No orders found.
                 </TableCell>
               </TableRow>

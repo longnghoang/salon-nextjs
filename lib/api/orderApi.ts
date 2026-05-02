@@ -16,10 +16,13 @@ export async function getOrders(params?: GetOrdersParams): Promise<Order[]> {
   defaultStartDate.setDate(defaultStartDate.getDate() - 30);
   
   const defaultEndDate = new Date();
-  defaultEndDate.setDate(defaultEndDate.getDate() + 1);
 
   const startDateStr = params?.startDate || defaultStartDate.toISOString();
-  const endDateStr = params?.endDate || defaultEndDate.toISOString();
+  // Add 1 day to the end date to ensure the API returns data for the entire selected day
+  const targetEndDate = params?.endDate ? new Date(params.endDate) : defaultEndDate;
+  targetEndDate.setDate(targetEndDate.getDate() + 1);
+  const endDateStr = targetEndDate.toISOString();
+
   const includeEmp = params?.includeOrderDetailEmployee ?? true;
 
   const searchParams = new URLSearchParams({
