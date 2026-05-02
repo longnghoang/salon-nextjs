@@ -74,7 +74,7 @@ export default async function OrdersPage(props: {
                 <TableRow key={order.id}>
                   <TableCell className="font-medium">{order.code}</TableCell>
                   <TableCell>
-                    {new Date(order.orderDate).toLocaleDateString('vi-VN', {
+                    {new Date(order.orderDate).toLocaleString('vi-VN', {
                       year: 'numeric',
                       month: '2-digit',
                       day: '2-digit',

@@ -33,5 +33,30 @@ export async function getOrders(params?: GetOrdersParams): Promise<Order[]> {
     includeOrderDetailEmployee: String(includeEmp),
   });
 
-  return fetchApi<Order[]>(`/api/Orders?${searchParams.toString()}`);
+  const orders = await fetchApi<Order[]>(`/api/Orders?${searchParams.toString()}`);
+
+  return (orders || []).map((order) => ({
+    ...order,
+    orderDate: ensureUtc(order.orderDate),
+    createdDateTime: ensureUtc(order.createdDateTime),
+    updatedDateTime: order.updatedDateTime
+      ? ensureUtc(order.updatedDateTime)
+      : null,
+  }));
+}
+
+/**
+ * Ensures a date string is treated as UTC by appending 'Z' if no timezone info is present.
+ */
+function ensureUtc(dateStr: string | null | undefined): string {
+  if (!dateStr) return '';
+  // If it already has Z or an offset (+/-), return as is
+  if (dateStr.endsWith('Z') || dateStr.includes('+') || dateStr.includes('-')) {
+    // Basic check for - as offset vs - in date YYYY-MM-DD
+    // Usually offsets are like +HH:mm or -HH:mm at the end
+    const lastPart = dateStr.slice(-6);
+    if (lastPart.includes('+') || lastPart.includes('-')) return dateStr;
+    if (dateStr.endsWith('Z')) return dateStr;
+  }
+  return `${dateStr}Z`;
 }
