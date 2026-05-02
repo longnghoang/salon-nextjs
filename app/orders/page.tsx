@@ -53,7 +53,7 @@ export default async function OrdersPage(props: {
           <TableHeader>
             <TableRow>
               <TableHead>Order Code</TableHead>
-              <TableHead>Date</TableHead>
+              <TableHead>Order Date</TableHead>
               <TableHead>Customer</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Amount</TableHead>
@@ -80,6 +80,7 @@ export default async function OrdersPage(props: {
                       day: '2-digit',
                       hour: '2-digit',
                       minute: '2-digit',
+                      second: '2-digit',
                     })}
                   </TableCell>
                   <TableCell>

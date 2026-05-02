@@ -33,7 +33,9 @@ export async function getOrders(params?: GetOrdersParams): Promise<Order[]> {
     includeOrderDetailEmployee: String(includeEmp),
   });
 
-  const orders = await fetchApi<Order[]>(`/api/Orders?${searchParams.toString()}`);
+  const orders = await fetchApi<Order[]>(
+    `/api/Orders?${searchParams.toString()}`
+  );
 
   return (orders || []).map((order) => ({
     ...order,
