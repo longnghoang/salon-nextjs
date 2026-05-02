@@ -14,12 +14,14 @@ export interface GetOrdersParams {
 export async function getOrders(params?: GetOrdersParams): Promise<Order[]> {
   const defaultStartDate = new Date();
   defaultStartDate.setDate(defaultStartDate.getDate() - 30);
-  
+
   const defaultEndDate = new Date();
 
   const startDateStr = params?.startDate || defaultStartDate.toISOString();
   // Add 1 day to the end date to ensure the API returns data for the entire selected day
-  const targetEndDate = params?.endDate ? new Date(params.endDate) : defaultEndDate;
+  const targetEndDate = params?.endDate
+    ? new Date(params.endDate)
+    : defaultEndDate;
   targetEndDate.setDate(targetEndDate.getDate() + 1);
   const endDateStr = targetEndDate.toISOString();
 

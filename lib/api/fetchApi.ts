@@ -4,16 +4,19 @@ import { auth } from '@/auth';
  * A wrapper around native fetch that automatically attaches the access token
  * from the NextAuth session for server-side data fetching.
  */
-export async function fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+export async function fetchApi<T>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<T> {
   const session = await auth();
   const accessToken = session?.accessToken;
 
   const headers = new Headers(options.headers);
-  
+
   if (accessToken) {
     headers.set('Authorization', `Bearer ${accessToken}`);
   }
-  
+
   // Set default Content-Type if not provided
   if (!headers.has('Content-Type') && options.body) {
     headers.set('Content-Type', 'application/json');

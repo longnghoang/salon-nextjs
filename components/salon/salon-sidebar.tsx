@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import {
   ShoppingCart,
   Package,
@@ -12,17 +12,21 @@ import {
   ChevronLeft,
   ChevronRight,
   Scissors,
-  LayoutDashboard
-} from "lucide-react";
-import { useState } from "react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+  LayoutDashboard,
+} from 'lucide-react';
+import { useState } from 'react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 const links = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/orders", label: "Orders", icon: ShoppingCart },
-  { href: "/products", label: "Products", icon: Package },
-  { href: "/customers", label: "Customers", icon: Users },
-  { href: "/reports", label: "Reports", icon: BarChart },
+  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/orders', label: 'Orders', icon: ShoppingCart },
+  { href: '/products', label: 'Products', icon: Package },
+  { href: '/customers', label: 'Customers', icon: Users },
+  { href: '/reports', label: 'Reports', icon: BarChart },
 ];
 
 export function SalonSidebar() {
@@ -32,11 +36,11 @@ export function SalonSidebar() {
   return (
     <div
       className={cn(
-        "relative hidden h-screen flex-col border-r bg-background transition-all duration-300 md:flex",
-        isCollapsed ? "w-16" : "w-64"
+        'relative hidden h-screen flex-col border-r bg-background transition-all duration-300 md:flex',
+        isCollapsed ? 'w-16' : 'w-64'
       )}
     >
-      <div className="flex h-14 lg:h-[60px] items-center border-b px-4">
+      <div className="flex h-14 items-center border-b px-4 lg:h-[60px]">
         <Link href="/" className="flex items-center gap-2 font-semibold">
           <Scissors className="h-6 w-6 shrink-0" />
           {!isCollapsed && <span className="truncate">Salon Admin</span>}
@@ -46,10 +50,14 @@ export function SalonSidebar() {
       <Button
         variant="outline"
         size="icon"
-        className="absolute -right-3 top-4 lg:top-[18px] z-20 h-6 w-6 rounded-full"
+        className="absolute top-4 -right-3 z-20 h-6 w-6 rounded-full lg:top-[18px]"
         onClick={() => setIsCollapsed(!isCollapsed)}
       >
-        {isCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
+        {isCollapsed ? (
+          <ChevronRight className="h-3 w-3" />
+        ) : (
+          <ChevronLeft className="h-3 w-3" />
+        )}
         <span className="sr-only">Toggle Sidebar</span>
       </Button>
 
@@ -57,7 +65,10 @@ export function SalonSidebar() {
         <nav className="grid gap-2 px-2">
           {links.map((link) => {
             const Icon = link.icon;
-            const isActive = link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
+            const isActive =
+              link.href === '/'
+                ? pathname === '/'
+                : pathname.startsWith(link.href);
 
             if (isCollapsed) {
               return (
@@ -66,17 +77,20 @@ export function SalonSidebar() {
                     <Link
                       href={link.href}
                       className={cn(
-                        "flex h-10 w-10 mx-auto items-center justify-center rounded-lg transition-colors hover:text-foreground",
+                        'mx-auto flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:text-foreground',
                         isActive
-                          ? "bg-accent text-accent-foreground"
-                          : "text-muted-foreground hover:bg-accent"
+                          ? 'bg-accent text-accent-foreground'
+                          : 'text-muted-foreground hover:bg-accent'
                       )}
                     >
                       <Icon className="h-5 w-5" />
                       <span className="sr-only">{link.label}</span>
                     </Link>
                   </TooltipTrigger>
-                  <TooltipContent side="right" className="flex items-center gap-4">
+                  <TooltipContent
+                    side="right"
+                    className="flex items-center gap-4"
+                  >
                     {link.label}
                   </TooltipContent>
                 </Tooltip>
@@ -88,10 +102,10 @@ export function SalonSidebar() {
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:text-foreground",
+                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:text-foreground',
                   isActive
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:bg-accent"
+                    ? 'bg-accent text-accent-foreground'
+                    : 'text-muted-foreground hover:bg-accent'
                 )}
               >
                 <Icon className="h-4 w-4 shrink-0" />
@@ -101,7 +115,6 @@ export function SalonSidebar() {
           })}
         </nav>
       </div>
-
     </div>
   );
 }

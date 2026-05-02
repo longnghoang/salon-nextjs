@@ -1,18 +1,16 @@
-import { signIn } from "@/auth"
-import { Button } from "@/components/ui/button"
+import { signIn } from '@/auth';
+import { Button } from '@/components/ui/button';
 
 export default async function LoginPage(props: {
-  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const searchParams = await props.searchParams;
-  const callbackUrl = (searchParams?.callbackUrl as string) || "/";
+  const callbackUrl = (searchParams?.callbackUrl as string) || '/';
 
   return (
-    <div className="flex h-full flex-col items-center justify-center space-y-6 bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-border">
+    <div className="flex h-full flex-col items-center justify-center space-y-6 rounded-xl border border-border bg-slate-50 p-4 dark:bg-slate-900">
       <div className="flex flex-col space-y-2 text-center">
-        <h1 className="text-2xl font-bold tracking-tight">
-          Welcome back
-        </h1>
+        <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
         <p className="text-sm text-muted-foreground">
           Sign in to your account to manage the salon
         </p>
@@ -21,8 +19,8 @@ export default async function LoginPage(props: {
       <div className="w-full max-w-sm">
         <form
           action={async () => {
-            "use server"
-            await signIn("azure-ad-b2c", { redirectTo: callbackUrl })
+            'use server';
+            await signIn('azure-ad-b2c', { redirectTo: callbackUrl });
           }}
         >
           <Button type="submit" className="w-full">
@@ -31,5 +29,5 @@ export default async function LoginPage(props: {
         </form>
       </div>
     </div>
-  )
+  );
 }
