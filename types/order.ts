@@ -1,3 +1,10 @@
+export enum OrderStatus {
+  New = 1,
+  InProgress = 2,
+  Completed = 3,
+  Deleted = 4,
+}
+
 export interface Order {
   id: number;
   code: string;
@@ -9,7 +16,7 @@ export interface Order {
   amount: number;
   paymentAmount: number;
   remainingAmount: number;
-  status: number;
+  status: OrderStatus;
   statusName: string;
   totalCommissionAmount: number;
   createdBy: string;

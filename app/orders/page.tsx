@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/table';
 import type { Order } from '@/types/order';
 import { DatePickerFilter } from '@/components/orders/date-picker-filter';
+import { StatusBadge } from '@/components/orders/status-badge';
 
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
@@ -23,13 +24,17 @@ export default async function OrdersPage(props: {
       : undefined;
   const endDate =
     typeof searchParams.endDate === 'string' ? searchParams.endDate : undefined;
+  const status =
+    typeof searchParams.status === 'string'
+      ? parseInt(searchParams.status, 10)
+      : undefined;
 
   let displayOrders: Order[] = [];
   let errorMsg = '';
 
   try {
-    const orders = await getOrders({ startDate, endDate });
-    // Display only 10 orders first
+    const orders = await getOrders({ startDate, endDate, status });
+    // Display only 100 orders first
     displayOrders = orders?.slice(0, 100) || [];
   } catch (error) {
     console.error('Failed to fetch orders:', error);
@@ -86,7 +91,9 @@ export default async function OrdersPage(props: {
                   <TableCell>
                     {order.customerName || order.customerMobile || 'Guest'}
                   </TableCell>
-                  <TableCell>{order.statusName}</TableCell>
+                  <TableCell>
+                    <StatusBadge status={order.status} />
+                  </TableCell>
                   <TableCell className="text-right">
                     {new Intl.NumberFormat('vi-VN', {
                       style: 'currency',

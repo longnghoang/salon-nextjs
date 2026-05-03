@@ -1,9 +1,10 @@
 import { fetchApi } from './fetchApi';
-import type { Order } from '@/types/order';
+import type { Order, OrderStatus } from '@/types/order';
 
 export interface GetOrdersParams {
   startDate?: string;
   endDate?: string;
+  status?: OrderStatus | number;
   includeOrderDetailEmployee?: boolean;
 }
 
@@ -32,6 +33,10 @@ export async function getOrders(params?: GetOrdersParams): Promise<Order[]> {
     endDate: endDateStr,
     includeOrderDetailEmployee: String(includeEmp),
   });
+
+  if (params?.status !== undefined) {
+    searchParams.set('status', String(params.status));
+  }
 
   const orders = await fetchApi<Order[]>(
     `/api/Orders?${searchParams.toString()}`
