@@ -24,9 +24,7 @@ export function SessionExpiredDialog({ error }: { error?: string }) {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogAction
-            onClick={() => signOut({ redirectTo: '/login' })}
-          >
+          <AlertDialogAction onClick={() => signOut({ redirectTo: '/login' })}>
             OK
           </AlertDialogAction>
         </AlertDialogFooter>

@@ -8,7 +8,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import type { Order } from '@/types/order';
-import { DatePickerFilter } from '@/components/orders/date-picker-filter';
+import { OrderFilter } from '@/components/orders/order-filter';
 import { StatusBadge } from '@/components/orders/status-badge';
 import { OrdersPagination } from '@/components/orders/orders-pagination';
 
@@ -62,7 +62,7 @@ export default async function OrdersPage(props: {
           View and manage salon transactions and bookings.
         </p>
       </header>
-      <DatePickerFilter />
+      <OrderFilter />
 
       <div className="space-y-6">
         <div className="rounded-md border">

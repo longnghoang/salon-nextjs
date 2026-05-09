@@ -58,10 +58,7 @@ export const authConfig = {
               },
             });
             if (!res.ok) {
-              console.error(
-                'Failed to fetch user roles. Status:',
-                res.status
-              );
+              console.error('Failed to fetch user roles. Status:', res.status);
               throw new Error('Failed to fetch user profile');
             }
 

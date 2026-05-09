@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select';
 import { OrderStatus } from '@/types/order';
 
-export function DatePickerFilter() {
+export function OrderFilter() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -169,7 +169,7 @@ export function DatePickerFilter() {
           onClick={handleApply}
           className="group relative flex items-center gap-2 overflow-hidden px-6 transition-all duration-300 active:scale-95"
         >
-          <Search className="h-4 w-4 transition-all duration-300 group-hover:rotate-12 group-hover:scale-110" />
+          <Search className="h-4 w-4 transition-all duration-300 group-hover:scale-110 group-hover:rotate-12" />
           <span>Apply</span>
         </Button>
         <Button
