@@ -7,6 +7,7 @@ import { auth } from '@/auth';
 import { SalonSidebar } from '@/components/salon/salon-sidebar';
 import { SalonHeader } from '@/components/salon/salon-header';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { SessionExpiredDialog } from '@/components/session-expired-dialog';
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -37,6 +38,7 @@ export default async function RootLayout({
     >
       <body>
         <ThemeProvider>
+          <SessionExpiredDialog error={session?.error} />
           <TooltipProvider>
             <div className="grid min-h-screen w-full md:grid-cols-[auto_1fr]">
               <SalonSidebar />
