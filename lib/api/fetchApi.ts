@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 
 /**
@@ -9,6 +10,11 @@ export async function fetchApi<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const session = await auth();
+
+  if (session?.error === 'RefreshTokenError') {
+    redirect('/login');
+  }
+
   const accessToken = session?.accessToken;
 
   const headers = new Headers(options.headers);

@@ -59,6 +59,29 @@ export function DatePickerFilter() {
     defaultEnd,
   ]);
 
+  // Sync internal state with URL params when they change (e.g. back/forward nav)
+  // We use the "Adjusting state when a prop changes" pattern to avoid useEffect lints/renders
+  const [lastParams, setLastParams] = React.useState({
+    start: startDateParam,
+    end: endDateParam,
+    status: statusParam,
+  });
+
+  if (
+    startDateParam !== lastParams.start ||
+    endDateParam !== lastParams.end ||
+    statusParam !== lastParams.status
+  ) {
+    setLastParams({
+      start: startDateParam,
+      end: endDateParam,
+      status: statusParam,
+    });
+    setStartDate(startDateParam ? new Date(startDateParam) : defaultStart);
+    setEndDate(endDateParam ? new Date(endDateParam) : defaultEnd);
+    setStatus(statusParam || 'all');
+  }
+
   const handleApply = () => {
     const params = new URLSearchParams(searchParams.toString());
 
@@ -80,6 +103,9 @@ export function DatePickerFilter() {
       params.delete('status');
     }
 
+    // Reset pagination to page 1 when applying new filters
+    params.delete('page');
+
     router.push(`?${params.toString()}`);
   };
 
@@ -90,6 +116,7 @@ export function DatePickerFilter() {
     const params = new URLSearchParams();
     params.set('startDate', defaultStart.toISOString());
     params.set('endDate', defaultEnd.toISOString());
+    // Pagination is implicitly reset as we're creating a fresh URLSearchParams
     router.push(`?${params.toString()}`);
   };
 
