@@ -10,7 +10,12 @@ import {
   SheetTrigger,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  AvatarBadge,
+} from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,6 +33,7 @@ import {
   Users,
   BarChart,
   LayoutDashboard,
+  UserRoundIcon,
 } from 'lucide-react';
 import {
   Breadcrumb,
@@ -121,8 +127,9 @@ export function SalonHeader({
                   alt={user?.name || 'User'}
                 />
                 <AvatarFallback>
-                  {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                  <UserRoundIcon className={cn('size-5')} />
                 </AvatarFallback>
+                <AvatarBadge className="bg-green-600 dark:bg-green-800" />
               </Avatar>
               <span className="sr-only">Toggle user menu</span>
             </Button>
