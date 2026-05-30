@@ -11,6 +11,7 @@ import type { Order } from '@/types/order';
 import { OrderFilter } from '@/components/orders/order-filter';
 import { StatusBadge } from '@/components/orders/status-badge';
 import { OrdersPagination } from '@/components/orders/orders-pagination';
+import { formatDateTime } from '@/lib/utils';
 
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
@@ -90,16 +91,7 @@ export default async function OrdersPage(props: {
                 displayOrders.map((order) => (
                   <TableRow key={order.id}>
                     <TableCell className="font-medium">{order.code}</TableCell>
-                    <TableCell>
-                      {new Date(order.orderDate).toLocaleString('vi-VN', {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        second: '2-digit',
-                      })}
-                    </TableCell>
+                    <TableCell>{formatDateTime(order.orderDate)}</TableCell>
                     <TableCell>
                       {order.customerName || order.customerMobile || 'Guest'}
                     </TableCell>

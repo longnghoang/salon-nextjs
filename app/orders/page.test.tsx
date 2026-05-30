@@ -58,6 +58,11 @@ describe('OrdersPage Server Component', () => {
 
     // Check if currency is formatted (basic check for the amount)
     expect(screen.getByText(/150\.000/)).toBeInTheDocument();
+
+    // Check if the order dates are formatted as DD/MM/YYYY - HH:mm:ss (date before time separated by dash)
+    expect(
+      screen.getAllByText(/\d{2}\/\d{2}\/\d{4} - \d{2}:\d{2}:\d{2}/)
+    ).toHaveLength(2);
   });
 
   it('renders error state if API fails', async () => {
