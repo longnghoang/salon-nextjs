@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import OrdersPage from './page';
 import { getOrders } from '@/lib/api/orderApi';
-import { OrderStatus } from '@/types/order';
+import { Order, OrderStatus } from '@/types/order';
 
 // Mock the API call
 vi.mock('@/lib/api/orderApi', () => ({
@@ -32,7 +32,10 @@ const mockOrders = [
 
 describe('OrdersPage Server Component', () => {
   it('renders the empty state when no orders are returned', async () => {
-    vi.mocked(getOrders).mockResolvedValueOnce([]);
+    vi.mocked(getOrders).mockResolvedValueOnce({
+      items: [],
+      paging: { before: null, after: null, hasNext: false, hasPrevious: false },
+    });
 
     // Server components are just async functions, so we await them
     const ui = await OrdersPage({ searchParams: Promise.resolve({}) });
@@ -42,8 +45,10 @@ describe('OrdersPage Server Component', () => {
   });
 
   it('renders a list of orders correctly', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    vi.mocked(getOrders).mockResolvedValueOnce(mockOrders as any);
+    vi.mocked(getOrders).mockResolvedValueOnce({
+      items: mockOrders as unknown as Order[],
+      paging: { before: 'c1', after: 'c2', hasNext: true, hasPrevious: false },
+    });
 
     const ui = await OrdersPage({ searchParams: Promise.resolve({}) });
     render(ui);

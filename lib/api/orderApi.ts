@@ -1,48 +1,80 @@
 import { fetchApi } from './fetchApi';
 import type { Order, OrderStatus } from '@/types/order';
+import { toLocalDateString } from '@/lib/utils';
 
 export interface GetOrdersParams {
   startDate?: string;
   endDate?: string;
   status?: OrderStatus | number;
+  pageSize?: number;
+  before?: string;
+  after?: string;
   includeOrderDetailEmployee?: boolean;
 }
 
+export interface CursorPaginationInfo {
+  before: string | null;
+  after: string | null;
+  hasNext: boolean;
+  hasPrevious: boolean;
+}
+
+export interface CursorPaginatedResult<T> {
+  items: T[];
+  paging: CursorPaginationInfo;
+}
+
 /**
- * Fetches orders from the external Web API.
- * Defaults to fetching orders from the last 30 days up to tomorrow.
+ * Fetches cursor-paginated orders from the external Web API.
+ * Defaults to fetching orders from the last 30 days.
  */
-export async function getOrders(params?: GetOrdersParams): Promise<Order[]> {
+export async function getOrders(
+  params?: GetOrdersParams
+): Promise<CursorPaginatedResult<Order>> {
   const defaultStartDate = new Date();
   defaultStartDate.setDate(defaultStartDate.getDate() - 30);
 
   const defaultEndDate = new Date();
 
-  const startDateStr = params?.startDate || defaultStartDate.toISOString();
-  // Add 1 day to the end date to ensure the API returns data for the entire selected day
-  const targetEndDate = params?.endDate
-    ? new Date(params.endDate)
-    : defaultEndDate;
-  targetEndDate.setDate(targetEndDate.getDate() + 1);
-  const endDateStr = targetEndDate.toISOString();
+  const startDateStr = params?.startDate || toLocalDateString(defaultStartDate);
+  const endDateStr = params?.endDate || toLocalDateString(defaultEndDate);
 
   const includeEmp = params?.includeOrderDetailEmployee ?? true;
 
   const searchParams = new URLSearchParams({
-    startDate: startDateStr,
-    endDate: endDateStr,
-    includeOrderDetailEmployee: String(includeEmp),
+    StartDate: startDateStr,
+    EndDate: endDateStr,
+    IncludeOrderDetailEmployee: String(includeEmp),
   });
 
   if (params?.status !== undefined) {
-    searchParams.set('status', String(params.status));
+    searchParams.set('Status', String(params.status));
   }
 
-  const orders = await fetchApi<Order[]>(
-    `/api/Orders?${searchParams.toString()}`
+  if (params?.pageSize !== undefined) {
+    searchParams.set('PageSize', String(params.pageSize));
+  }
+
+  if (params?.before !== undefined) {
+    searchParams.set('Before', params.before);
+  }
+
+  if (params?.after !== undefined) {
+    searchParams.set('After', params.after);
+  }
+
+  const response = await fetchApi<CursorPaginatedResult<Order>>(
+    `/api/Orders/cursor?${searchParams.toString()}`
   );
 
-  return (orders || []).map((order) => ({
+  if (!response || !response.items) {
+    return {
+      items: [],
+      paging: { before: null, after: null, hasNext: false, hasPrevious: false },
+    };
+  }
+
+  const items = response.items.map((order) => ({
     ...order,
     orderDate: ensureUtc(order.orderDate),
     createdDateTime: ensureUtc(order.createdDateTime),
@@ -50,6 +82,11 @@ export async function getOrders(params?: GetOrdersParams): Promise<Order[]> {
       ? ensureUtc(order.updatedDateTime)
       : null,
   }));
+
+  return {
+    items,
+    paging: response.paging,
+  };
 }
 
 /**

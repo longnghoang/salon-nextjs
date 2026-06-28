@@ -18,6 +18,9 @@ interface DatePickerProps {
   onChange?: (date: Date | undefined) => void;
   placeholder?: string;
   className?: string;
+  startMonth?: Date;
+  endMonth?: Date;
+  captionLayout?: 'label' | 'dropdown' | 'dropdown-months' | 'dropdown-years';
 }
 
 export function DatePicker({
@@ -25,7 +28,15 @@ export function DatePicker({
   onChange,
   placeholder = 'Pick a date',
   className,
+  startMonth,
+  endMonth,
+  captionLayout = 'dropdown',
 }: DatePickerProps) {
+  const defaultStartMonth =
+    startMonth || new Date(new Date().getFullYear() - 100, 0);
+  const defaultEndMonth =
+    endMonth || new Date(new Date().getFullYear() + 10, 11);
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -47,6 +58,9 @@ export function DatePicker({
           selected={date}
           onSelect={onChange}
           defaultMonth={date}
+          captionLayout={captionLayout}
+          startMonth={defaultStartMonth}
+          endMonth={defaultEndMonth}
           autoFocus
         />
       </PopoverContent>

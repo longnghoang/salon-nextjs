@@ -10,7 +10,7 @@ import {
 import type { Order } from '@/types/order';
 import { OrderFilter } from '@/components/orders/order-filter';
 import { StatusBadge } from '@/components/orders/status-badge';
-import { OrdersPagination } from '@/components/orders/orders-pagination';
+import { OrdersCursorPagination } from '@/components/orders/orders-cursor-pagination';
 import { formatDateTime } from '@/lib/utils';
 
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -30,28 +30,37 @@ export default async function OrdersPage(props: {
     typeof searchParams.status === 'string'
       ? parseInt(searchParams.status, 10)
       : undefined;
-  const page =
-    typeof searchParams.page === 'string' ? parseInt(searchParams.page, 10) : 1;
+  const before =
+    typeof searchParams.before === 'string' ? searchParams.before : undefined;
+  const after =
+    typeof searchParams.after === 'string' ? searchParams.after : undefined;
   const pageSize = 20;
 
   let displayOrders: Order[] = [];
-  let totalCount = 0;
+  let hasNext = false;
+  let hasPrevious = false;
+  let beforeCursor: string | null = null;
+  let afterCursor: string | null = null;
   let errorMsg = '';
 
   try {
-    const orders = await getOrders({ startDate, endDate, status });
-    totalCount = orders?.length || 0;
-
-    // Calculate pagination slice
-    const startIndex = (page - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    displayOrders = orders?.slice(startIndex, endIndex) || [];
+    const paginatedResult = await getOrders({
+      startDate,
+      endDate,
+      status,
+      pageSize,
+      before,
+      after,
+    });
+    displayOrders = paginatedResult.items || [];
+    hasNext = paginatedResult.paging?.hasNext || false;
+    hasPrevious = paginatedResult.paging?.hasPrevious || false;
+    beforeCursor = paginatedResult.paging?.before || null;
+    afterCursor = paginatedResult.paging?.after || null;
   } catch (error) {
     console.error('Failed to fetch orders:', error);
     errorMsg = 'Failed to load orders. Please try again later.';
   }
-
-  const totalPages = Math.ceil(totalCount / pageSize);
 
   return (
     <div className="mx-auto flex w-full max-w-7xl animate-in flex-col gap-6 duration-700 fade-in">
@@ -120,11 +129,12 @@ export default async function OrdersPage(props: {
           </Table>
         </div>
 
-        <OrdersPagination
-          currentPage={page}
-          totalPages={totalPages}
-          totalResults={totalCount}
-          pageSize={pageSize}
+        <OrdersCursorPagination
+          hasNext={hasNext}
+          hasPrevious={hasPrevious}
+          beforeCursor={beforeCursor}
+          afterCursor={afterCursor}
+          itemsCount={displayOrders.length}
         />
       </div>
     </div>

@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { OrderStatus } from '@/types/order';
+import { toLocalDateString, parseLocalDate } from '@/lib/utils';
 
 export function OrderFilter() {
   const router = useRouter();
@@ -32,11 +33,11 @@ export function OrderFilter() {
   const statusParam = searchParams.get('status');
 
   const [startDate, setStartDate] = React.useState<Date | undefined>(
-    startDateParam ? new Date(startDateParam) : defaultStart
+    startDateParam ? parseLocalDate(startDateParam) : defaultStart
   );
 
   const [endDate, setEndDate] = React.useState<Date | undefined>(
-    endDateParam ? new Date(endDateParam) : defaultEnd
+    endDateParam ? parseLocalDate(endDateParam) : defaultEnd
   );
 
   const [status, setStatus] = React.useState<string>(statusParam || 'all');
@@ -46,8 +47,9 @@ export function OrderFilter() {
     // so the server component fetches using the explicit defaults
     if (!startDateParam || !endDateParam) {
       const params = new URLSearchParams(searchParams.toString());
-      if (!startDateParam) params.set('startDate', defaultStart.toISOString());
-      if (!endDateParam) params.set('endDate', defaultEnd.toISOString());
+      if (!startDateParam)
+        params.set('startDate', toLocalDateString(defaultStart));
+      if (!endDateParam) params.set('endDate', toLocalDateString(defaultEnd));
       router.replace(`?${params.toString()}`);
     }
   }, [
@@ -77,8 +79,10 @@ export function OrderFilter() {
       end: endDateParam,
       status: statusParam,
     });
-    setStartDate(startDateParam ? new Date(startDateParam) : defaultStart);
-    setEndDate(endDateParam ? new Date(endDateParam) : defaultEnd);
+    setStartDate(
+      startDateParam ? parseLocalDate(startDateParam) : defaultStart
+    );
+    setEndDate(endDateParam ? parseLocalDate(endDateParam) : defaultEnd);
     setStatus(statusParam || 'all');
   }
 
@@ -86,13 +90,13 @@ export function OrderFilter() {
     const params = new URLSearchParams(searchParams.toString());
 
     if (startDate) {
-      params.set('startDate', startDate.toISOString());
+      params.set('startDate', toLocalDateString(startDate));
     } else {
       params.delete('startDate');
     }
 
     if (endDate) {
-      params.set('endDate', endDate.toISOString());
+      params.set('endDate', toLocalDateString(endDate));
     } else {
       params.delete('endDate');
     }
@@ -103,8 +107,10 @@ export function OrderFilter() {
       params.delete('status');
     }
 
-    // Reset pagination to page 1 when applying new filters
+    // Reset pagination and clear cursor parameters when applying new filters
     params.delete('page');
+    params.delete('before');
+    params.delete('after');
 
     router.push(`?${params.toString()}`);
   };
@@ -114,8 +120,8 @@ export function OrderFilter() {
     setEndDate(defaultEnd);
     setStatus('all');
     const params = new URLSearchParams();
-    params.set('startDate', defaultStart.toISOString());
-    params.set('endDate', defaultEnd.toISOString());
+    params.set('startDate', toLocalDateString(defaultStart));
+    params.set('endDate', toLocalDateString(defaultEnd));
     // Pagination is implicitly reset as we're creating a fresh URLSearchParams
     router.push(`?${params.toString()}`);
   };
