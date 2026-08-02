@@ -47,3 +47,27 @@ export function parseLocalDate(dateStr: string): Date {
   }
   return new Date(dateStr);
 }
+
+export function removeVietnameseTones(str: string): string {
+  if (!str) return '';
+  let result = str;
+  result = result.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  result = result.replace(/đ/g, 'd').replace(/Đ/g, 'D');
+  return result;
+}
+
+export function matchVietnameseText(
+  sourceText: string | null | undefined,
+  searchQuery: string
+): boolean {
+  if (!searchQuery) return true;
+  if (!sourceText) return false;
+
+  const normalizedSource = removeVietnameseTones(sourceText.toLowerCase());
+  const normalizedQuery = removeVietnameseTones(searchQuery.toLowerCase());
+
+  return (
+    normalizedSource.includes(normalizedQuery) ||
+    sourceText.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+}

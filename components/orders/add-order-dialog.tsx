@@ -28,7 +28,7 @@ import {
   Loader2,
   UserCheck,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, matchVietnameseText } from '@/lib/utils';
 import {
   saveOrderAction,
   getProductsAction,
@@ -50,6 +50,347 @@ interface UIOrderDetail {
   quantity: number;
   discountAmount: number;
   assignedStaff: OrderDetailEmployee[];
+}
+
+interface ItemSelectorPopoverContentProps {
+  services: Service[];
+  products: Product[];
+  onSelect: (item: Product | Service, type: 'product' | 'service') => void;
+  formatVND: (value: number) => string;
+}
+
+function ItemSelectorPopoverContent({
+  services,
+  products,
+  onSelect,
+  formatVND,
+}: ItemSelectorPopoverContentProps) {
+  const [searchText, setSearchText] = React.useState('');
+  const [highlightedIndex, setHighlightedIndex] = React.useState(0);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const listRef = React.useRef<HTMLDivElement>(null);
+
+  // Auto focus input on popover mount
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      inputRef.current?.focus();
+    }, 50);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const filteredServices = React.useMemo(() => {
+    const q = searchText.trim();
+    return services.filter(
+      (s) => matchVietnameseText(s.name, q) || matchVietnameseText(s.code, q)
+    );
+  }, [services, searchText]);
+
+  const filteredProducts = React.useMemo(() => {
+    const q = searchText.trim();
+    return products.filter(
+      (p) => matchVietnameseText(p.name, q) || matchVietnameseText(p.code, q)
+    );
+  }, [products, searchText]);
+
+  // Combined list for keyboard navigation
+  const combinedItems = React.useMemo(() => {
+    const items: Array<{
+      item: Product | Service;
+      type: 'product' | 'service';
+    }> = [];
+
+    filteredServices.forEach((s) => items.push({ item: s, type: 'service' }));
+    filteredProducts.forEach((p) => items.push({ item: p, type: 'product' }));
+
+    return items;
+  }, [filteredServices, filteredProducts]);
+
+  // Safe highlighted index bounded by available items length
+  const safeHighlightedIndex =
+    highlightedIndex < combinedItems.length ? highlightedIndex : 0;
+
+  // Scroll active item into view when safeHighlightedIndex changes
+  React.useEffect(() => {
+    if (listRef.current && combinedItems.length > 0) {
+      const activeEl = listRef.current.querySelector<HTMLElement>(
+        `[data-index="${safeHighlightedIndex}"]`
+      );
+      if (activeEl) {
+        activeEl.scrollIntoView({ block: 'nearest' });
+      }
+    }
+  }, [safeHighlightedIndex, combinedItems.length]);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchText(e.target.value);
+    setHighlightedIndex(0);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (combinedItems.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlightedIndex((prev) => (prev + 1) % combinedItems.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightedIndex(
+        (prev) => (prev - 1 + combinedItems.length) % combinedItems.length
+      );
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const current = combinedItems[safeHighlightedIndex];
+      if (current) {
+        onSelect(current.item, current.type);
+      }
+    }
+  };
+
+  let globalCounter = 0;
+
+  return (
+    <PopoverContent className="flex max-h-80 w-80 flex-col p-2" align="start">
+      <div className="mb-1.5 flex shrink-0 items-center border-b border-border px-2 pb-1.5">
+        <Search className="mr-2 h-3.5 w-3.5 shrink-0 opacity-50" />
+        <input
+          ref={inputRef}
+          placeholder="Search product or service..."
+          value={searchText}
+          onChange={handleSearchChange}
+          onKeyDown={handleKeyDown}
+          className="flex h-7 w-full rounded-md bg-transparent text-xs outline-hidden placeholder:text-muted-foreground"
+        />
+        {searchText && (
+          <button
+            type="button"
+            onClick={() => {
+              setSearchText('');
+              setHighlightedIndex(0);
+            }}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        )}
+      </div>
+      <div
+        ref={listRef}
+        className="min-h-0 flex-1 touch-pan-y space-y-3 overflow-y-auto overscroll-contain p-1"
+        onWheel={(e) => e.stopPropagation()}
+      >
+        {filteredServices.length > 0 && (
+          <div>
+            <div className="border-b border-border/40 px-2 pb-1 text-[10px] font-bold text-muted-foreground uppercase">
+              Services
+            </div>
+            <div className="mt-1 space-y-0.5">
+              {filteredServices.map((s) => {
+                const index = globalCounter++;
+                const isHighlighted = safeHighlightedIndex === index;
+                return (
+                  <button
+                    key={s.id}
+                    data-index={index}
+                    type="button"
+                    onClick={() => onSelect(s, 'service')}
+                    onMouseEnter={() => setHighlightedIndex(index)}
+                    className={cn(
+                      'flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-xs transition-colors',
+                      isHighlighted
+                        ? 'bg-accent font-semibold text-accent-foreground ring-1 ring-primary/30'
+                        : 'hover:bg-muted'
+                    )}
+                  >
+                    <span className="mr-2 truncate font-medium">{s.name}</span>
+                    <span className="text-muted-foreground">
+                      {formatVND(s.price)}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {filteredProducts.length > 0 && (
+          <div>
+            <div className="border-b border-border/40 px-2 pb-1 text-[10px] font-bold text-muted-foreground uppercase">
+              Products
+            </div>
+            <div className="mt-1 space-y-0.5">
+              {filteredProducts.map((p) => {
+                const index = globalCounter++;
+                const isHighlighted = safeHighlightedIndex === index;
+                return (
+                  <button
+                    key={p.id}
+                    data-index={index}
+                    type="button"
+                    onClick={() => onSelect(p, 'product')}
+                    onMouseEnter={() => setHighlightedIndex(index)}
+                    className={cn(
+                      'flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-xs transition-colors',
+                      isHighlighted
+                        ? 'bg-accent font-semibold text-accent-foreground ring-1 ring-primary/30'
+                        : 'hover:bg-muted'
+                    )}
+                  >
+                    <span className="mr-2 truncate font-medium">{p.name}</span>
+                    <span className="text-muted-foreground">
+                      {formatVND(p.price)}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {combinedItems.length === 0 && (
+          <div className="py-4 text-center text-xs text-muted-foreground">
+            No products or services found.
+          </div>
+        )}
+      </div>
+    </PopoverContent>
+  );
+}
+
+interface CustomerSelectorPopoverContentProps {
+  customerSearchText: string;
+  onSearchChange: (text: string) => void;
+  customersList: Customer[];
+  isSearchingCustomers: boolean;
+  onSelectCustomer: (customer: Customer) => void;
+}
+
+function CustomerSelectorPopoverContent({
+  customerSearchText,
+  onSearchChange,
+  customersList,
+  isSearchingCustomers,
+  onSelectCustomer,
+}: CustomerSelectorPopoverContentProps) {
+  const [highlightedIndex, setHighlightedIndex] = React.useState(0);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const listRef = React.useRef<HTMLDivElement>(null);
+
+  // Auto focus search input when popover mounts
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      inputRef.current?.focus();
+    }, 50);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const safeHighlightedIndex =
+    highlightedIndex < customersList.length ? highlightedIndex : 0;
+
+  // Scroll active customer into view
+  React.useEffect(() => {
+    if (listRef.current && customersList.length > 0) {
+      const activeEl = listRef.current.querySelector<HTMLElement>(
+        `[data-index="${safeHighlightedIndex}"]`
+      );
+      if (activeEl) {
+        activeEl.scrollIntoView({ block: 'nearest' });
+      }
+    }
+  }, [safeHighlightedIndex, customersList.length]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onSearchChange(e.target.value);
+    setHighlightedIndex(0);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (customersList.length === 0 || isSearchingCustomers) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlightedIndex((prev) => (prev + 1) % customersList.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightedIndex(
+        (prev) => (prev - 1 + customersList.length) % customersList.length
+      );
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const selected = customersList[safeHighlightedIndex];
+      if (selected) {
+        onSelectCustomer(selected);
+      }
+    }
+  };
+
+  return (
+    <PopoverContent className="flex max-h-80 w-80 flex-col p-2" align="start">
+      <div className="flex shrink-0 items-center border-b border-border px-3 pb-2">
+        <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+        <input
+          ref={inputRef}
+          placeholder="Type name or phone..."
+          value={customerSearchText}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          className="flex h-8 w-full rounded-md bg-transparent text-sm outline-hidden placeholder:text-muted-foreground"
+        />
+        {customerSearchText && (
+          <button
+            type="button"
+            onClick={() => {
+              onSearchChange('');
+              setHighlightedIndex(0);
+            }}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
+      <div
+        ref={listRef}
+        className="min-h-0 flex-1 touch-pan-y space-y-1 overflow-y-auto overscroll-contain pt-2"
+        onWheel={(e) => e.stopPropagation()}
+      >
+        {isSearchingCustomers ? (
+          <div className="flex items-center justify-center py-4 text-xs text-muted-foreground">
+            <Loader2 className="mr-2 h-3 w-3 animate-spin" /> Searching...
+          </div>
+        ) : customersList.length > 0 ? (
+          customersList.map((cust, index) => {
+            const isHighlighted = safeHighlightedIndex === index;
+            return (
+              <button
+                key={cust.id}
+                data-index={index}
+                type="button"
+                onClick={() => onSelectCustomer(cust)}
+                onMouseEnter={() => setHighlightedIndex(index)}
+                className={cn(
+                  'flex w-full flex-col rounded-md px-3 py-2 text-left text-sm transition-colors duration-150',
+                  isHighlighted
+                    ? 'bg-accent text-accent-foreground ring-1 ring-primary/30'
+                    : 'hover:bg-muted'
+                )}
+              >
+                <span className="font-medium">{cust.fullName}</span>
+                <span className="text-xs text-muted-foreground">
+                  {cust.mobile}
+                </span>
+              </button>
+            );
+          })
+        ) : (
+          <div className="py-4 text-center text-xs text-muted-foreground">
+            {customerSearchText.trim()
+              ? 'No customers found.'
+              : 'Type name or phone number to search.'}
+          </div>
+        )}
+      </div>
+    </PopoverContent>
+  );
 }
 
 export function AddOrderDialog() {
@@ -83,7 +424,6 @@ export function AddOrderDialog() {
   ]);
 
   // Global Footer calculations
-  const [orderDiscountPercent, setOrderDiscountPercent] = React.useState(0);
   const [orderDiscountValue, setOrderDiscountValue] = React.useState(0);
   const [vatPercent, setVatPercent] = React.useState(0);
   const [vatValue, setVatValue] = React.useState(0);
@@ -132,10 +472,7 @@ export function AddOrderDialog() {
     return () => clearTimeout(delayDebounceFn);
   }, [customerSearchText, saveCustomerInfo]);
 
-  // Search filter states for item & staff popovers
-  const [itemSearchTexts, setItemSearchTexts] = React.useState<
-    Record<string, string>
-  >({});
+  // Search filter state for staff popovers
   const [staffSearchTexts, setStaffSearchTexts] = React.useState<
     Record<string, string>
   >({});
@@ -146,7 +483,6 @@ export function AddOrderDialog() {
     setCustomerSearchText('');
     setCustomersList([]);
     setSelectedCustomer(null);
-    setItemSearchTexts({});
     setStaffSearchTexts({});
     setOrderDetails([
       {
@@ -159,7 +495,6 @@ export function AddOrderDialog() {
         assignedStaff: [],
       },
     ]);
-    setOrderDiscountPercent(0);
     setOrderDiscountValue(0);
     setVatPercent(0);
     setVatValue(0);
@@ -205,19 +540,14 @@ export function AddOrderDialog() {
     0
   );
 
-  // Sync Global Discount (Percentage vs Value)
-  const handleGlobalDiscountPercentChange = (pct: number) => {
-    if (pct < 0 || isNaN(pct)) return;
-    setOrderDiscountPercent(pct);
-    setOrderDiscountValue(Math.round(subtotal * (pct / 100)));
-  };
-
+  // Order Discount (Value in VND)
   const handleGlobalDiscountValueChange = (val: number) => {
     if (val < 0 || isNaN(val)) return;
     setOrderDiscountValue(val);
-    setOrderDiscountPercent(
-      subtotal > 0 ? parseFloat(((val / subtotal) * 100).toFixed(2)) : 0
-    );
+    if (vatPercent > 0) {
+      const taxable = Math.max(0, subtotal - val);
+      setVatValue(Math.round(taxable * (vatPercent / 100)));
+    }
   };
 
   // Sync VAT (Percentage vs Value)
@@ -237,19 +567,17 @@ export function AddOrderDialog() {
     );
   };
 
-  // Recalculate values if subtotal changes
+  // Recalculate VAT if subtotal or discount changes
   React.useEffect(() => {
-    const discVal = Math.round(subtotal * (orderDiscountPercent / 100));
-    const taxable = Math.max(0, subtotal - discVal);
+    const taxable = Math.max(0, subtotal - orderDiscountValue);
     const calculatedVat = Math.round(taxable * (vatPercent / 100));
 
     const timer = setTimeout(() => {
-      setOrderDiscountValue(discVal);
       setVatValue(calculatedVat);
     }, 0);
 
     return () => clearTimeout(timer);
-  }, [subtotal, orderDiscountPercent, vatPercent]);
+  }, [subtotal, orderDiscountValue, vatPercent]);
 
   const grandTotal = Math.max(0, subtotal - orderDiscountValue + vatValue);
 
@@ -632,53 +960,21 @@ export function AddOrderDialog() {
                         <Search className="h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-80 p-2" align="start">
-                      <div className="flex items-center border-b border-border px-3 pb-2">
-                        <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-                        <input
-                          placeholder="Type name or phone..."
-                          value={customerSearchText}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setCustomerSearchText(val);
-                            if (!val.trim()) {
-                              setCustomersList([]);
-                            }
-                          }}
-                          className="flex h-8 w-full rounded-md bg-transparent text-sm outline-hidden placeholder:text-muted-foreground"
-                        />
-                      </div>
-                      <div className="max-h-60 space-y-1 overflow-y-auto pt-2">
-                        {isSearchingCustomers ? (
-                          <div className="flex items-center justify-center py-4 text-xs text-muted-foreground">
-                            <Loader2 className="mr-2 h-3 w-3 animate-spin" />{' '}
-                            Searching...
-                          </div>
-                        ) : customersList.length > 0 ? (
-                          customersList.map((cust) => (
-                            <button
-                              key={cust.id}
-                              onClick={() => {
-                                setSelectedCustomer(cust);
-                                setCustomerSearchText('');
-                              }}
-                              className="flex w-full flex-col rounded-md px-3 py-2 text-left text-sm transition-colors duration-150 hover:bg-muted"
-                            >
-                              <span className="font-medium">
-                                {cust.fullName}
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {cust.mobile}
-                              </span>
-                            </button>
-                          ))
-                        ) : (
-                          <div className="py-4 text-center text-xs text-muted-foreground">
-                            No customers found.
-                          </div>
-                        )}
-                      </div>
-                    </PopoverContent>
+                    <CustomerSelectorPopoverContent
+                      customerSearchText={customerSearchText}
+                      onSearchChange={(val) => {
+                        setCustomerSearchText(val);
+                        if (!val.trim()) {
+                          setCustomersList([]);
+                        }
+                      }}
+                      customersList={customersList}
+                      isSearchingCustomers={isSearchingCustomers}
+                      onSelectCustomer={(cust) => {
+                        setSelectedCustomer(cust);
+                        setCustomerSearchText('');
+                      }}
+                    />
                   </Popover>
                 )}
               </div>
@@ -710,30 +1006,14 @@ export function AddOrderDialog() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {orderDetails.map((row) => {
-                    const itemQuery = (itemSearchTexts[row.localId] || '')
-                      .toLowerCase()
-                      .trim();
-                    const filteredServices = services.filter(
-                      (s) =>
-                        s.name.toLowerCase().includes(itemQuery) ||
-                        (s.code && s.code.toLowerCase().includes(itemQuery))
-                    );
-                    const filteredProducts = products.filter(
-                      (p) =>
-                        p.name.toLowerCase().includes(itemQuery) ||
-                        (p.code && p.code.toLowerCase().includes(itemQuery))
-                    );
-
-                    const staffQuery = (staffSearchTexts[row.localId] || '')
-                      .toLowerCase()
-                      .trim();
+                    const staffQuery = (
+                      staffSearchTexts[row.localId] || ''
+                    ).trim();
                     const filteredEmployees = employees.filter(
                       (emp) =>
-                        emp.name.toLowerCase().includes(staffQuery) ||
-                        (emp.userName &&
-                          emp.userName.toLowerCase().includes(staffQuery)) ||
-                        (emp.email &&
-                          emp.email.toLowerCase().includes(staffQuery))
+                        matchVietnameseText(emp.name, staffQuery) ||
+                        matchVietnameseText(emp.userName, staffQuery) ||
+                        matchVietnameseText(emp.email, staffQuery)
                     );
 
                     return (
@@ -769,106 +1049,14 @@ export function AddOrderDialog() {
                                   <Search className="h-3.5 w-3.5 opacity-50" />
                                 </Button>
                               </PopoverTrigger>
-                              <PopoverContent
-                                className="w-80 p-2"
-                                align="start"
-                              >
-                                <div className="mb-1.5 flex items-center border-b border-border px-2 pb-1.5">
-                                  <Search className="mr-2 h-3.5 w-3.5 shrink-0 opacity-50" />
-                                  <input
-                                    placeholder="Search product or service..."
-                                    value={itemSearchTexts[row.localId] || ''}
-                                    onChange={(e) => {
-                                      const text = e.target.value;
-                                      setItemSearchTexts((prev) => ({
-                                        ...prev,
-                                        [row.localId]: text,
-                                      }));
-                                    }}
-                                    className="flex h-7 w-full rounded-md bg-transparent text-xs outline-hidden placeholder:text-muted-foreground"
-                                  />
-                                  {itemSearchTexts[row.localId] && (
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        setItemSearchTexts((prev) => ({
-                                          ...prev,
-                                          [row.localId]: '',
-                                        }))
-                                      }
-                                      className="text-muted-foreground hover:text-foreground"
-                                    >
-                                      <X className="h-3 w-3" />
-                                    </button>
-                                  )}
-                                </div>
-                                <div className="max-h-64 space-y-3 overflow-y-auto p-1">
-                                  {filteredServices.length > 0 && (
-                                    <div>
-                                      <div className="border-b border-border/40 px-2 pb-1 text-[10px] font-bold text-muted-foreground uppercase">
-                                        Services
-                                      </div>
-                                      <div className="mt-1 space-y-0.5">
-                                        {filteredServices.map((s) => (
-                                          <button
-                                            key={s.id}
-                                            onClick={() =>
-                                              handleItemSelect(
-                                                row.localId,
-                                                s,
-                                                'service'
-                                              )
-                                            }
-                                            className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-xs transition-colors hover:bg-muted"
-                                          >
-                                            <span className="mr-2 truncate font-medium">
-                                              {s.name}
-                                            </span>
-                                            <span className="text-muted-foreground">
-                                              {formatVND(s.price)}
-                                            </span>
-                                          </button>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  )}
-                                  {filteredProducts.length > 0 && (
-                                    <div>
-                                      <div className="border-b border-border/40 px-2 pb-1 text-[10px] font-bold text-muted-foreground uppercase">
-                                        Products
-                                      </div>
-                                      <div className="mt-1 space-y-0.5">
-                                        {filteredProducts.map((p) => (
-                                          <button
-                                            key={p.id}
-                                            onClick={() =>
-                                              handleItemSelect(
-                                                row.localId,
-                                                p,
-                                                'product'
-                                              )
-                                            }
-                                            className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-xs transition-colors hover:bg-muted"
-                                          >
-                                            <span className="mr-2 truncate font-medium">
-                                              {p.name}
-                                            </span>
-                                            <span className="text-muted-foreground">
-                                              {formatVND(p.price)}
-                                            </span>
-                                          </button>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  )}
-                                  {filteredServices.length === 0 &&
-                                    filteredProducts.length === 0 && (
-                                      <div className="py-4 text-center text-xs text-muted-foreground">
-                                        No products or services found.
-                                      </div>
-                                    )}
-                                </div>
-                              </PopoverContent>
+                              <ItemSelectorPopoverContent
+                                services={services}
+                                products={products}
+                                onSelect={(item, type) =>
+                                  handleItemSelect(row.localId, item, type)
+                                }
+                                formatVND={formatVND}
+                              />
                             </Popover>
                           )}
                         </td>
@@ -986,8 +1174,11 @@ export function AddOrderDialog() {
                                   )}
                                 </Button>
                               </PopoverTrigger>
-                              <PopoverContent className="w-72 p-3" align="end">
-                                <div className="mb-2 flex items-center justify-between">
+                              <PopoverContent
+                                className="flex max-h-80 w-72 flex-col p-3"
+                                align="end"
+                              >
+                                <div className="mb-2 flex shrink-0 items-center justify-between">
                                   <h4 className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
                                     Assign Staff & Commission
                                   </h4>
@@ -999,7 +1190,7 @@ export function AddOrderDialog() {
                                 </div>
 
                                 {employees.length > 0 && (
-                                  <div className="mb-2 flex items-center rounded-md border border-border px-2 py-1">
+                                  <div className="mb-2 flex shrink-0 items-center rounded-md border border-border px-2 py-1">
                                     <Search className="mr-1.5 h-3 w-3 shrink-0 opacity-50" />
                                     <input
                                       placeholder="Search staff..."
@@ -1033,7 +1224,10 @@ export function AddOrderDialog() {
                                 )}
 
                                 {filteredEmployees.length > 0 ? (
-                                  <div className="max-h-48 space-y-2 overflow-y-auto">
+                                  <div
+                                    className="min-h-0 flex-1 touch-pan-y space-y-2 overflow-y-auto overscroll-contain"
+                                    onWheel={(e) => e.stopPropagation()}
+                                  >
                                     {filteredEmployees.map((emp) => {
                                       const isAssigned = row.assignedStaff.some(
                                         (s) => s.userId === emp.id
@@ -1149,39 +1343,21 @@ export function AddOrderDialog() {
                 <label className="flex items-center text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                   Order Discount (-)
                 </label>
-                <div className="flex items-center space-x-2">
-                  <div className="relative flex-1">
-                    <Input
-                      type="number"
-                      value={orderDiscountPercent || ''}
-                      onChange={(e) =>
-                        handleGlobalDiscountPercentChange(
-                          parseFloat(e.target.value) || 0
-                        )
-                      }
-                      placeholder="0"
-                      className="pr-6 text-xs font-semibold"
-                    />
-                    <span className="absolute top-1/2 right-2.5 -translate-y-1/2 text-xs font-medium text-muted-foreground">
-                      %
-                    </span>
-                  </div>
-                  <div className="relative flex-1">
-                    <Input
-                      type="number"
-                      value={orderDiscountValue || ''}
-                      onChange={(e) =>
-                        handleGlobalDiscountValueChange(
-                          parseFloat(e.target.value) || 0
-                        )
-                      }
-                      placeholder="0"
-                      className="pr-6 text-xs font-semibold"
-                    />
-                    <span className="absolute top-1/2 right-2.5 -translate-y-1/2 text-xs font-medium text-muted-foreground">
-                      đ
-                    </span>
-                  </div>
+                <div className="relative w-full">
+                  <Input
+                    type="number"
+                    value={orderDiscountValue || ''}
+                    onChange={(e) =>
+                      handleGlobalDiscountValueChange(
+                        parseFloat(e.target.value) || 0
+                      )
+                    }
+                    placeholder="0"
+                    className="pr-6 text-xs font-semibold"
+                  />
+                  <span className="absolute top-1/2 right-2.5 -translate-y-1/2 text-xs font-medium text-muted-foreground">
+                    đ
+                  </span>
                 </div>
               </div>
 
