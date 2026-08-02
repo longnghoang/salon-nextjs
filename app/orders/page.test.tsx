@@ -9,6 +9,12 @@ vi.mock('@/lib/api/orderApi', () => ({
   getOrders: vi.fn(),
 }));
 
+vi.mock('@/components/orders/add-order-dialog', () => ({
+  AddOrderDialog: () => (
+    <div data-testid="add-order-dialog">Add Order Dialog Mock</div>
+  ),
+}));
+
 const mockOrders = [
   {
     id: '1',

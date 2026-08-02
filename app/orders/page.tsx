@@ -12,6 +12,7 @@ import { OrderFilter } from '@/components/orders/order-filter';
 import { StatusBadge } from '@/components/orders/status-badge';
 import { OrdersCursorPagination } from '@/components/orders/orders-cursor-pagination';
 import { formatDateTime } from '@/lib/utils';
+import { AddOrderDialog } from '@/components/orders/add-order-dialog';
 
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
@@ -64,13 +65,16 @@ export default async function OrdersPage(props: {
 
   return (
     <div className="mx-auto flex w-full max-w-7xl animate-in flex-col gap-6 duration-700 fade-in">
-      <header className="mt-4 border-b border-border pb-6">
-        <h1 className="font-heading text-4xl tracking-tight text-foreground">
-          Orders
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          View and manage salon transactions and bookings.
-        </p>
+      <header className="mt-4 flex items-center justify-between border-b border-border pb-6">
+        <div>
+          <h1 className="font-heading text-4xl tracking-tight text-foreground">
+            Orders
+          </h1>
+          <p className="mt-2 text-muted-foreground">
+            View and manage salon transactions and bookings.
+          </p>
+        </div>
+        <AddOrderDialog />
       </header>
       <OrderFilter />
 

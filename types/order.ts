@@ -24,3 +24,38 @@ export interface Order {
   updatedBy: string | null;
   updatedDateTime: string | null;
 }
+
+export interface OrderDetailEmployee {
+  id?: number;
+  userId: number;
+  employeeName: string;
+  orderDetailId?: number;
+  commissionPercentage?: number | null;
+  commissionAmount?: number | null;
+}
+
+export interface OrderDetail {
+  id?: number;
+  orderId?: number;
+  price: number;
+  quantity: number;
+  discountAmount: number;
+  totalAmount: number;
+  serviceId?: number | null;
+  serviceName?: string | null;
+  servicePrice?: number | null;
+  serviceDiscountPrice?: number | null;
+  productId?: number | null;
+  productName?: string | null;
+  productPrice?: number | null;
+  productDiscountPrice?: number | null;
+  orderDetailEmployees?: OrderDetailEmployee[] | null;
+}
+
+export interface OrderWithDetails extends Order {
+  orderDetails?: OrderDetail[] | null;
+  isPayment?: boolean;
+  isBanking?: boolean;
+  discountAmount?: number | null;
+  vat?: number | null;
+}

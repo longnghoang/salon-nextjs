@@ -1,5 +1,5 @@
 import { fetchApi } from './fetchApi';
-import type { Order, OrderStatus } from '@/types/order';
+import type { Order, OrderStatus, OrderWithDetails } from '@/types/order';
 import { toLocalDateString } from '@/lib/utils';
 
 export interface GetOrdersParams {
@@ -87,6 +87,18 @@ export async function getOrders(
     items,
     paging: response.paging,
   };
+}
+
+/**
+ * Creates a new order on the backend API.
+ */
+export async function createOrder(
+  order: Partial<OrderWithDetails>
+): Promise<Order> {
+  return await fetchApi<Order>('/api/Orders', {
+    method: 'POST',
+    body: JSON.stringify(order),
+  });
 }
 
 /**
