@@ -102,6 +102,26 @@ export async function createOrder(
 }
 
 /**
+ * Fetches single order with details by ID.
+ */
+export async function getOrderById(id: number): Promise<OrderWithDetails> {
+  return await fetchApi<OrderWithDetails>(`/api/Orders/${id}`);
+}
+
+/**
+ * Updates an existing order on the backend API.
+ */
+export async function updateOrder(
+  id: number,
+  order: Partial<OrderWithDetails>
+): Promise<Order> {
+  return await fetchApi<Order>(`/api/Orders/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(order),
+  });
+}
+
+/**
  * Ensures a date string is treated as UTC by appending 'Z' if no timezone info is present.
  */
 function ensureUtc(dateStr: string | null | undefined): string {

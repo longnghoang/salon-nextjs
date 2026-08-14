@@ -1,18 +1,9 @@
 import { getOrders } from '@/lib/api/orderApi';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import type { Order } from '@/types/order';
 import { OrderFilter } from '@/components/orders/order-filter';
-import { StatusBadge } from '@/components/orders/status-badge';
 import { OrdersCursorPagination } from '@/components/orders/orders-cursor-pagination';
-import { formatDateTime } from '@/lib/utils';
-import { AddOrderDialog } from '@/components/orders/add-order-dialog';
+import { AddOrderDialog } from '@/components/orders/order-form-dialog';
+import { OrdersTable } from '@/components/orders/orders-table';
 
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
@@ -79,59 +70,7 @@ export default async function OrdersPage(props: {
       <OrderFilter />
 
       <div className="space-y-6">
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Order Code</TableHead>
-                <TableHead>Order Date</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {errorMsg ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="py-6 text-center text-destructive"
-                  >
-                    {errorMsg}
-                  </TableCell>
-                </TableRow>
-              ) : displayOrders.length > 0 ? (
-                displayOrders.map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell className="font-medium">{order.code}</TableCell>
-                    <TableCell>{formatDateTime(order.orderDate)}</TableCell>
-                    <TableCell>
-                      {order.customerName || order.customerMobile || 'Guest'}
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge status={order.status} />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {new Intl.NumberFormat('vi-VN', {
-                        style: 'currency',
-                        currency: 'VND',
-                      }).format(order.amount)}
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="py-6 text-center text-muted-foreground"
-                  >
-                    No orders found.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+        <OrdersTable orders={displayOrders} errorMsg={errorMsg} />
 
         <OrdersCursorPagination
           hasNext={hasNext}

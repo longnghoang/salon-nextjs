@@ -13,6 +13,7 @@ export interface Order {
   customerId: number | null;
   customerName: string | null;
   customerMobile: string | null;
+  customerEmail?: string | null;
   amount: number;
   paymentAmount: number;
   remainingAmount: number;
