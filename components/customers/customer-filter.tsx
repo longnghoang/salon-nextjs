@@ -10,9 +10,15 @@ import { Search, RotateCcw } from 'lucide-react';
 export function CustomerFilter() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [searchText, setSearchText] = React.useState(
-    searchParams.get('searchText') || ''
-  );
+  const searchTextParam = searchParams.get('searchText') || '';
+  const [searchText, setSearchText] = React.useState(searchTextParam);
+
+  // Sync internal state with URL params when they change (e.g. back/forward nav)
+  const [lastSearchParam, setLastSearchParam] = React.useState(searchTextParam);
+  if (searchTextParam !== lastSearchParam) {
+    setLastSearchParam(searchTextParam);
+    setSearchText(searchTextParam);
+  }
 
   const handleApply = () => {
     const params = new URLSearchParams(searchParams.toString());
@@ -21,7 +27,10 @@ export function CustomerFilter() {
     } else {
       params.delete('searchText');
     }
-    params.delete('page'); // Reset to page 1 on new search
+    // Reset pagination and clear cursor parameters on new search
+    params.delete('page');
+    params.delete('before');
+    params.delete('after');
     router.push(`?${params.toString()}`);
   };
 
@@ -30,6 +39,8 @@ export function CustomerFilter() {
     const params = new URLSearchParams(searchParams.toString());
     params.delete('searchText');
     params.delete('page');
+    params.delete('before');
+    params.delete('after');
     router.push(`?${params.toString()}`);
   };
 

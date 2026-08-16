@@ -1,4 +1,4 @@
-import { getCustomers, countCustomers } from '@/lib/api/customerApi';
+import { getCustomers } from '@/lib/api/customerApi';
 import {
   Table,
   TableBody,
@@ -9,9 +9,10 @@ import {
 } from '@/components/ui/table';
 import type { Customer } from '@/types/customer';
 import { CustomerFilter } from '@/components/customers/customer-filter';
-import { OrdersPagination } from '@/components/orders/orders-pagination';
+import { CustomersCursorPagination } from '@/components/customers/customers-cursor-pagination';
 
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
 export default async function CustomersPage(props: {
   searchParams: SearchParams;
 }) {
@@ -20,26 +21,36 @@ export default async function CustomersPage(props: {
     typeof searchParams.searchText === 'string'
       ? searchParams.searchText
       : undefined;
-  const page =
-    typeof searchParams.page === 'string' ? parseInt(searchParams.page, 10) : 1;
+  const before =
+    typeof searchParams.before === 'string' ? searchParams.before : undefined;
+  const after =
+    typeof searchParams.after === 'string' ? searchParams.after : undefined;
   const pageSize = 20;
 
   let displayCustomers: Customer[] = [];
-  let totalCount = 0;
+  let hasNext = false;
+  let hasPrevious = false;
+  let beforeCursor: string | null = null;
+  let afterCursor: string | null = null;
   let errorMsg = '';
-  try {
-    displayCustomers = await getCustomers({
-      currentPage: page,
-      pageSize: pageSize,
-      searchText: searchText,
-    });
 
-    totalCount = await countCustomers();
+  try {
+    const paginatedResult = await getCustomers({
+      searchText,
+      pageSize,
+      before,
+      after,
+    });
+    displayCustomers = paginatedResult.items || [];
+    hasNext = paginatedResult.paging?.hasNext || false;
+    hasPrevious = paginatedResult.paging?.hasPrevious || false;
+    beforeCursor = paginatedResult.paging?.before || null;
+    afterCursor = paginatedResult.paging?.after || null;
   } catch (error) {
     console.error('Failed to fetch customers:', error);
     errorMsg = 'Failed to load customers. Please try again later.';
   }
-  const totalPages = Math.ceil(totalCount / pageSize);
+
   return (
     <div className="mx-auto flex w-full max-w-7xl animate-in flex-col gap-6 duration-700 fade-in">
       <header className="mt-4 border-b border-border pb-6">
@@ -68,7 +79,7 @@ export default async function CustomersPage(props: {
               {errorMsg ? (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
+                    colSpan={6}
                     className="py-6 text-center text-destructive"
                   >
                     {errorMsg}
@@ -101,13 +112,13 @@ export default async function CustomersPage(props: {
                         }
                       )}
                     </TableCell>
-                    <TableCell>{customer.note}</TableCell>
+                    <TableCell>{customer.note || '-'}</TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
+                    colSpan={6}
                     className="py-6 text-center text-muted-foreground"
                   >
                     No customers found.
@@ -118,11 +129,12 @@ export default async function CustomersPage(props: {
           </Table>
         </div>
 
-        <OrdersPagination
-          currentPage={page}
-          totalPages={totalPages}
-          totalResults={totalCount}
-          pageSize={pageSize}
+        <CustomersCursorPagination
+          hasNext={hasNext}
+          hasPrevious={hasPrevious}
+          beforeCursor={beforeCursor}
+          afterCursor={afterCursor}
+          itemsCount={displayCustomers.length}
         />
       </div>
     </div>

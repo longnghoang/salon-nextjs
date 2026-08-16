@@ -35,9 +35,9 @@ export async function getEmployeesAction() {
 }
 
 export async function searchCustomersAction(query: string) {
-  return await getCustomers({
-    currentPage: 1,
-    pageSize: 10,
+  const result = await getCustomers({
+    pageSize: 20,
     searchText: query,
   });
+  return result.items || [];
 }
