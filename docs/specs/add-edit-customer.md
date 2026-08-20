@@ -2,7 +2,7 @@
 
 ## 1. Objective
 Provide a unified, responsive dialog interface (`CustomerFormDialog`) and management flow allowing salon staff and administrators to:
-1. **Create New Customer Profiles**: Add a customer with required contact details (`fullName`, `mobile`), optional details (`email`, `address`, `birthDay`, `note`), format and validate inputs (including 10-digit mobile `____ ___ ___` and `dd-MM-yyyy` birthday), and submit via `POST /api/Customers` via Server Action.
+1. **Create New Customer Profiles**: Add a customer with required contact details (`fullName`, `mobile`), optional details (`email`, `address`, `birthDay`, `note`), format and validate inputs (including 10-digit mobile `____ ___ ___` and `dd/MM/yyyy` birthday), and submit via `POST /api/Customers` via Server Action.
 2. **Edit Existing Customer Profiles**: Click on a Customer Code button in the customers table (`CustomersTable`) to open the pre-populated dialog with existing customer details and submit updates via `PUT /api/Customers/{id}`.
 3. **Seamless List Synchronization**: Automatically refresh customer listing and pagination upon successful creation or modification using Next.js `router.refresh()`.
 
@@ -133,7 +133,7 @@ export interface CustomerFormDialogProps {
   - Modal title: `"Edit Customer - <CustomerCode>"`
   - Submit button: `"Save Changes"`
   - When opened, fetches customer data via `getCustomerAction(customerId)`.
-  - Pre-populates all form fields (`fullName`, `mobile`, `email`, `address`, `birthDay`, `note`), displaying birthday formatted as `dd-MM-yyyy` and mobile formatted as `0901 234 567`.
+  - Pre-populates all form fields (`fullName`, `mobile`, `email`, `address`, `birthDay`, `note`), displaying birthday formatted as `dd/MM/yyyy` and mobile formatted as `0901 234 567`.
   - Customer `code` is displayed as a read-only badge in the dialog header.
   - On submit, invokes `updateCustomerAction(customerId, payload)`.
 
@@ -151,12 +151,12 @@ export interface CustomerFormDialogProps {
    - Validation error: `"Mobile number must be exactly 10 digits."`
 3. **Date of Birth (`birthDay`)**:
    - Optional.
-   - Format: `dd-MM-yyyy` (e.g., `25-08-2011`).
-   - **Auto-formatting / masking**: Raw digit input auto-formats to `dd-MM-yyyy` as the user types (e.g. entering `25082011` becomes `25-08-2011`).
-   - **Date Picker Calendar**: Accessible calendar popover trigger (`<Calendar mode="single" captionLayout="dropdown" />`) allowing users to browse and pick a date, automatically updating the input to `dd-MM-yyyy`. Future dates are disabled.
+   - Format: `dd/MM/yyyy` (e.g., `25/08/2011`).
+   - **Auto-formatting / masking**: Raw digit input auto-formats to `dd/MM/yyyy` as the user types (e.g. entering `25082011` becomes `25/08/2011`).
+   - **Date Picker Calendar**: Accessible calendar popover trigger (`<Calendar mode="single" captionLayout="dropdown" />`) allowing users to browse and pick a date, automatically updating the input to `dd/MM/yyyy`. Future dates are disabled.
    - Validates valid calendar date and ensures it is not a future date.
    - Converted to ISO string (`YYYY-MM-DDT00:00:00Z` or `YYYY-MM-DD`) when sending to API.
-   - Validation error: `"Please enter a valid date in dd-MM-yyyy format."`
+   - Validation error: `"Please enter a valid date in dd/MM/yyyy format."`
 
 4. **Email Address (`email`)**:
    - Optional.
@@ -171,6 +171,7 @@ export interface CustomerFormDialogProps {
 
 - Refactor `app/customers/page.tsx` to use client component `CustomersTable` (matching `OrdersTable` pattern).
 - In `CustomersTable`, the **Customer Code** column is a clickable button/badge (styled with subtle border, hover state, and `Pencil` icon) that triggers `CustomerFormDialog` in `mode="edit"` with the selected customer's ID.
+- In `CustomersTable`, the **DOB** column formats dates consistently as `dd/MM/yyyy`.
 - Header on `app/customers/page.tsx` includes `AddCustomerDialog` trigger button.
 - Submitting the dialog shows loading indicator (`Loader2` spinner) and disables inputs.
 - On success, the dialog closes, form state resets, and `router.refresh()` executes to re-fetch the server component customer list.
@@ -205,12 +206,12 @@ export function formatMobileNumber(value: string): string {
   return `${digits.slice(0, 4)} ${digits.slice(4, 7)} ${digits.slice(7, 10)}`;
 }
 
-// Helper for date formatting: '25082011' -> '25-08-2011'
+// Helper for date formatting: '25082011' -> '25/08/2011'
 export function formatDateInput(value: string): string {
   const digits = value.replace(/\D/g, '').slice(0, 8);
   if (digits.length <= 2) return digits;
-  if (digits.length <= 4) return `${digits.slice(0, 2)}-${digits.slice(2)}`;
-  return `${digits.slice(0, 2)}-${digits.slice(2, 4)}-${digits.slice(4, 8)}`;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`;
 }
 
 // Follow standard Next.js Server Actions + Client Component modal pattern
@@ -224,13 +225,13 @@ export function formatDateInput(value: string): string {
   - `components/customers/customer-form-dialog.test.tsx`:
     - Renders Create mode with empty fields and default button.
     - Tests mobile input masking/formatting `____ ___ ___` (10 digits).
-    - Tests `dd-MM-yyyy` birthday input auto-formatting (`25082011` -> `25-08-2011`) and date picker interaction.
+    - Tests `dd/MM/yyyy` birthday input auto-formatting (`25082011` -> `25/08/2011`) and date picker interaction.
     - Validates required fields (`fullName`, `mobile`) and displays error messages on invalid input.
     - Renders Edit mode, fetches customer details by ID, pre-populates fields, and submits update action.
     - Disables submit button and displays spinner while saving.
 - **Table Component Tests**:
   - `components/customers/customers-table.test.tsx`:
-    - Renders customer items correctly.
+    - Renders customer items correctly with DOB formatted as `dd/MM/yyyy`.
     - Clicking on a Customer Code button opens the edit dialog with the corresponding customer.
 - **Server Page Tests**:
   - `app/customers/page.test.tsx`:
@@ -263,8 +264,8 @@ export function formatDateInput(value: string): string {
 - [ ] `app/actions/customerActions.ts` provides `saveCustomerAction`, `getCustomerAction`, and `updateCustomerAction`.
 - [ ] `CustomerFormDialog` and `AddCustomerDialog` implemented in `components/customers/customer-form-dialog.tsx`.
 - [ ] Mobile input is formatted with 10-digit mask `____ ___ ___` and validated strictly for 10 digits.
-- [ ] Date of Birth input auto-formats `dd-MM-yyyy` (e.g. `25082011` -> `25-08-2011`) and provides DatePicker calendar selection.
-- [ ] `CustomersTable` client component implemented in `components/customers/customers-table.tsx` with Customer Code buttons that trigger editing.
+- [ ] Date of Birth input auto-formats `dd/MM/yyyy` (e.g. `25082011` -> `25/08/2011`) and provides DatePicker calendar selection.
+- [ ] `CustomersTable` client component displays DOB in `dd/MM/yyyy` format and provides Customer Code buttons that trigger editing.
 - [ ] `app/customers/page.tsx` integrates `AddCustomerDialog` in header and `CustomersTable` in content body.
 - [ ] All unit, component, and integration tests pass (`pnpm test --run`).
 - [ ] Linting (`pnpm lint`) and type checks (`pnpm typecheck`) pass with zero errors.
@@ -277,4 +278,5 @@ export function formatDateInput(value: string): string {
 1. **API Endpoints**: `GET /api/Customers/{id}`, `POST /api/Customers`, `PUT /api/Customers/{id}`.
 2. **Customer Code**: Auto-generated by backend on create; displayed as read-only identifier in edit dialog. Clickable button in table triggers edit dialog.
 3. **Mobile Number**: Strictly 10 digits, formatted as `____ ___ ___` (e.g. `0901 234 567`).
-4. **Date of Birth**: Formatted as `dd-MM-yyyy` (e.g. `25-08-2011`), supporting both auto-formatted text input and DatePicker calendar popover selection.
+4. **Date of Birth**: Formatted as `dd/MM/yyyy` (e.g. `25/08/2011`) across table and form dialog, supporting both auto-formatted text input and DatePicker calendar popover selection.
+

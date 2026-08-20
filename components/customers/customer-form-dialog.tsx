@@ -49,21 +49,21 @@ export function formatMobileNumber(value: string): string {
 }
 
 /**
- * Formats a raw digit or formatted date string into dd-MM-yyyy (e.g. '25082011' -> '25-08-2011')
+ * Formats a raw digit or formatted date string into dd/MM/yyyy (e.g. '25082011' -> '25/08/2011')
  */
 export function formatDateInput(value: string): string {
   const digits = value.replace(/\D/g, '').slice(0, 8);
   if (digits.length <= 2) return digits;
-  if (digits.length <= 4) return `${digits.slice(0, 2)}-${digits.slice(2)}`;
-  return `${digits.slice(0, 2)}-${digits.slice(2, 4)}-${digits.slice(4, 8)}`;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`;
 }
 
 /**
- * Parses dd-MM-yyyy format to a valid Date object or null if invalid / future date
+ * Parses dd/MM/yyyy (or dd-MM-yyyy) format to a valid Date object or null if invalid / future date
  */
 export function parseDateFromDDMMYYYY(dateStr: string): Date | null {
   if (!dateStr || !dateStr.trim()) return null;
-  const match = dateStr.trim().match(/^(\d{2})-(\d{2})-(\d{4})$/);
+  const match = dateStr.trim().match(/^(\d{2})[-/](\d{2})[-/](\d{4})$/);
   if (!match) return null;
 
   const day = parseInt(match[1], 10);
@@ -87,7 +87,7 @@ export function parseDateFromDDMMYYYY(dateStr: string): Date | null {
 }
 
 /**
- * Formats a Date object or ISO string to dd-MM-yyyy
+ * Formats a Date object or ISO string to dd/MM/yyyy
  */
 export function formatDateToDDMMYYYY(
   isoStr: string | null | undefined
@@ -100,7 +100,7 @@ export function formatDateToDDMMYYYY(
   const month = String(date.getUTCMonth() + 1).padStart(2, '0');
   const year = date.getUTCFullYear();
 
-  return `${day}-${month}-${year}`;
+  return `${day}/${month}/${year}`;
 }
 
 export interface CustomerFormDialogProps {
@@ -255,7 +255,7 @@ export function CustomerFormDialog({
       const day = String(date.getDate()).padStart(2, '0');
       const month = String(date.getMonth() + 1).padStart(2, '0');
       const year = date.getFullYear();
-      setBirthDay(`${day}-${month}-${year}`);
+      setBirthDay(`${day}/${month}/${year}`);
       if (errors.birthDay) {
         setErrors((prev) => ({ ...prev, birthDay: undefined }));
       }
@@ -287,7 +287,7 @@ export function CustomerFormDialog({
     if (birthDay.trim()) {
       const parsed = parseDateFromDDMMYYYY(birthDay);
       if (!parsed) {
-        newErrors.birthDay = 'Please enter a valid date in dd-MM-yyyy format.';
+        newErrors.birthDay = 'Please enter a valid date in dd/MM/yyyy format.';
       } else if (parsed > new Date()) {
         newErrors.birthDay = 'Date of birth cannot be in the future.';
       }
@@ -448,7 +448,7 @@ export function CustomerFormDialog({
                 <div className="relative flex items-center">
                   <Input
                     id="customer-birthDay"
-                    placeholder="dd-MM-yyyy (e.g. 25-08-2011)"
+                    placeholder="dd/MM/yyyy (e.g. 25/08/2011)"
                     value={birthDay}
                     onChange={handleBirthDayChange}
                     disabled={isSaving}

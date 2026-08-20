@@ -72,7 +72,7 @@ describe('CustomersTable Component', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Nguyen Van A')).toBeInTheDocument();
     expect(screen.getByText('0901 234 567')).toBeInTheDocument();
-    expect(screen.getByText('15-05-1990')).toBeInTheDocument();
+    expect(screen.getByText('15/05/1990')).toBeInTheDocument();
     expect(screen.getByText('VIP customer')).toBeInTheDocument();
 
     expect(

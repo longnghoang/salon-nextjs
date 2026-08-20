@@ -50,29 +50,32 @@ describe('Phone and Date Helper Utilities', () => {
     expect(formatMobileNumber('abc0901def234567')).toBe('0901 234 567'); // Strips non-digits
   });
 
-  it('formatDateInput formats raw digits to dd-MM-yyyy', () => {
-    expect(formatDateInput('25082011')).toBe('25-08-2011');
+  it('formatDateInput formats raw digits to dd/MM/yyyy', () => {
+    expect(formatDateInput('25082011')).toBe('25/08/2011');
     expect(formatDateInput('25')).toBe('25');
-    expect(formatDateInput('2508')).toBe('25-08');
-    expect(formatDateInput('25-08-2011')).toBe('25-08-2011');
-    expect(formatDateInput('25082011999')).toBe('25-08-2011'); // Truncates beyond 8 digits
-    expect(formatDateInput('abc25def08xyz2011')).toBe('25-08-2011'); // Strips non-digits
+    expect(formatDateInput('2508')).toBe('25/08');
+    expect(formatDateInput('25/08/2011')).toBe('25/08/2011');
+    expect(formatDateInput('25082011999')).toBe('25/08/2011'); // Truncates beyond 8 digits
+    expect(formatDateInput('abc25def08xyz2011')).toBe('25/08/2011'); // Strips non-digits
   });
 
-  it('parseDateFromDDMMYYYY parses valid dd-MM-yyyy strings and rejects invalid ones', () => {
-    const valid = parseDateFromDDMMYYYY('20-10-1995');
+  it('parseDateFromDDMMYYYY parses valid dd/MM/yyyy strings and rejects invalid ones', () => {
+    const valid = parseDateFromDDMMYYYY('20/10/1995');
     expect(valid).not.toBeNull();
     expect(valid?.getFullYear()).toBe(1995);
     expect(valid?.getMonth()).toBe(9); // 0-indexed October
     expect(valid?.getDate()).toBe(20);
 
-    expect(parseDateFromDDMMYYYY('31-02-2020')).toBeNull(); // Invalid date
+    const validHyphen = parseDateFromDDMMYYYY('20-10-1995');
+    expect(validHyphen).not.toBeNull();
+
+    expect(parseDateFromDDMMYYYY('31/02/2020')).toBeNull(); // Invalid date
     expect(parseDateFromDDMMYYYY('invalid')).toBeNull();
     expect(parseDateFromDDMMYYYY('')).toBeNull();
   });
 
-  it('formatDateToDDMMYYYY converts date string to dd-MM-yyyy', () => {
-    expect(formatDateToDDMMYYYY('1995-10-20T00:00:00Z')).toBe('20-10-1995');
+  it('formatDateToDDMMYYYY converts date string to dd/MM/yyyy', () => {
+    expect(formatDateToDDMMYYYY('1995-10-20T00:00:00Z')).toBe('20/10/1995');
     expect(formatDateToDDMMYYYY(null)).toBe('');
   });
 });
@@ -99,7 +102,7 @@ describe('CustomerFormDialog - Create Mode', () => {
     ).toBeInTheDocument();
   });
 
-  it('formats mobile input as ____ ___ ___ and date input as dd-MM-yyyy while typing', () => {
+  it('formats mobile input as ____ ___ ___ and date input as dd/MM/yyyy while typing', () => {
     render(
       <CustomerFormDialog mode="create" open={true} onOpenChange={vi.fn()} />
     );
@@ -110,7 +113,7 @@ describe('CustomerFormDialog - Create Mode', () => {
 
     const dobInput = screen.getByLabelText(/Date of Birth/i);
     fireEvent.change(dobInput, { target: { value: '25082011' } });
-    expect(dobInput).toHaveValue('25-08-2011');
+    expect(dobInput).toHaveValue('25/08/2011');
   });
 
   it('allows opening calendar popover via calendar icon button', () => {
@@ -158,7 +161,7 @@ describe('CustomerFormDialog - Create Mode', () => {
       target: { value: 'invalid-email' },
     });
     fireEvent.change(screen.getByLabelText(/Date of Birth/i), {
-      target: { value: '99-99-9999' },
+      target: { value: '99/99/9999' },
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Save Customer' }));
@@ -167,7 +170,7 @@ describe('CustomerFormDialog - Create Mode', () => {
       await screen.findByText('Please enter a valid email address.')
     ).toBeInTheDocument();
     expect(
-      await screen.findByText('Please enter a valid date in dd-MM-yyyy format.')
+      await screen.findByText('Please enter a valid date in dd/MM/yyyy format.')
     ).toBeInTheDocument();
     expect(customerActions.saveCustomerAction).not.toHaveBeenCalled();
   });
@@ -196,7 +199,7 @@ describe('CustomerFormDialog - Create Mode', () => {
       target: { value: 'c@example.com' },
     });
     fireEvent.change(screen.getByLabelText(/Date of Birth/i), {
-      target: { value: '20-10-1995' },
+      target: { value: '20/10/1995' },
     });
     fireEvent.change(screen.getByLabelText(/Address/i), {
       target: { value: '789 Tran Hung Dao' },
@@ -249,7 +252,7 @@ describe('CustomerFormDialog - Edit Mode', () => {
     expect(screen.getByText('CUST-010')).toBeInTheDocument();
     expect(screen.getByLabelText(/Full Name/i)).toHaveValue('Nguyen Van C');
     expect(screen.getByLabelText(/Phone Number/i)).toHaveValue('0901 234 567');
-    expect(screen.getByLabelText(/Date of Birth/i)).toHaveValue('20-10-1995');
+    expect(screen.getByLabelText(/Date of Birth/i)).toHaveValue('20/10/1995');
     expect(screen.getByLabelText(/Email/i)).toHaveValue('c@example.com');
     expect(screen.getByLabelText(/Address/i)).toHaveValue('789 Tran Hung Dao');
     expect(
