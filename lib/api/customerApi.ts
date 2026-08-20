@@ -62,3 +62,35 @@ export async function getCustomers(
 
   return response;
 }
+
+/**
+ * Fetches single customer by ID.
+ */
+export async function getCustomerById(id: number): Promise<Customer> {
+  return await fetchApi<Customer>(`/api/Customers/${id}`);
+}
+
+/**
+ * Creates a new customer on the backend API.
+ */
+export async function createCustomer(
+  customer: Partial<Customer>
+): Promise<Customer> {
+  return await fetchApi<Customer>('/api/Customers', {
+    method: 'POST',
+    body: JSON.stringify(customer),
+  });
+}
+
+/**
+ * Updates an existing customer on the backend API.
+ */
+export async function updateCustomer(
+  id: number,
+  customer: Partial<Customer>
+): Promise<Customer> {
+  return await fetchApi<Customer>(`/api/Customers/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(customer),
+  });
+}

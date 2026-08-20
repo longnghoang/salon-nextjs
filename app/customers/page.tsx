@@ -1,15 +1,9 @@
 import { getCustomers } from '@/lib/api/customerApi';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import type { Customer } from '@/types/customer';
 import { CustomerFilter } from '@/components/customers/customer-filter';
 import { CustomersCursorPagination } from '@/components/customers/customers-cursor-pagination';
+import { CustomersTable } from '@/components/customers/customers-table';
+import { AddCustomerDialog } from '@/components/customers/customer-form-dialog';
 
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
@@ -53,81 +47,20 @@ export default async function CustomersPage(props: {
 
   return (
     <div className="mx-auto flex w-full max-w-7xl animate-in flex-col gap-6 duration-700 fade-in">
-      <header className="mt-4 border-b border-border pb-6">
-        <h1 className="font-heading text-4xl tracking-tight text-foreground">
-          Customers
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          Manage your salon client profiles and history.
-        </p>
+      <header className="mt-4 flex items-center justify-between border-b border-border pb-6">
+        <div>
+          <h1 className="font-heading text-4xl tracking-tight text-foreground">
+            Customers
+          </h1>
+          <p className="mt-2 text-muted-foreground">
+            Manage your salon client profiles and history.
+          </p>
+        </div>
+        <AddCustomerDialog />
       </header>
       <CustomerFilter />
       <div className="space-y-6">
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Customer Code</TableHead>
-                <TableHead>Customer Name</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>DOB</TableHead>
-                <TableHead>Created Date</TableHead>
-                <TableHead>Note</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {errorMsg ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className="py-6 text-center text-destructive"
-                  >
-                    {errorMsg}
-                  </TableCell>
-                </TableRow>
-              ) : displayCustomers.length > 0 ? (
-                displayCustomers.map((customer) => (
-                  <TableRow key={customer.id}>
-                    <TableCell className="font-medium">
-                      {customer.code}
-                    </TableCell>
-                    <TableCell>{customer.fullName}</TableCell>
-                    <TableCell>{customer.mobile}</TableCell>
-                    <TableCell>
-                      {customer.birthDay
-                        ? new Date(customer.birthDay).toLocaleString('vi-VN', {
-                            year: 'numeric',
-                            month: '2-digit',
-                            day: '2-digit',
-                          })
-                        : '-'}
-                    </TableCell>
-                    <TableCell>
-                      {new Date(customer.createdDateTime).toLocaleString(
-                        'vi-VN',
-                        {
-                          year: 'numeric',
-                          month: '2-digit',
-                          day: '2-digit',
-                        }
-                      )}
-                    </TableCell>
-                    <TableCell>{customer.note || '-'}</TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className="py-6 text-center text-muted-foreground"
-                  >
-                    No customers found.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+        <CustomersTable customers={displayCustomers} errorMsg={errorMsg} />
 
         <CustomersCursorPagination
           hasNext={hasNext}

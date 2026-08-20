@@ -12,3 +12,12 @@ export interface Customer {
   updatedBy: string | null;
   updatedDateTime: string | null;
 }
+
+export interface CustomerFormData {
+  fullName: string;
+  mobile: string;
+  email?: string;
+  address?: string;
+  birthDay?: string | null;
+  note?: string | null;
+}

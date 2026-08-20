@@ -75,12 +75,17 @@ describe('CustomersPage Server Component', () => {
     // Check if customer codes and names are rendered
     expect(screen.getByText('CUST-001')).toBeInTheDocument();
     expect(screen.getByText('Nguyen Van A')).toBeInTheDocument();
-    expect(screen.getByText('0901234567')).toBeInTheDocument();
+    expect(screen.getByText('0901 234 567')).toBeInTheDocument();
     expect(screen.getByText('VIP customer')).toBeInTheDocument();
 
     expect(screen.getByText('CUST-002')).toBeInTheDocument();
     expect(screen.getByText('Tran Thi B')).toBeInTheDocument();
-    expect(screen.getByText('0912345678')).toBeInTheDocument();
+    expect(screen.getByText('0912 345 678')).toBeInTheDocument();
+
+    // Check if Add Customer button is rendered
+    expect(
+      screen.getByRole('button', { name: /Add Customer/i })
+    ).toBeInTheDocument();
 
     // Check if customer counts and pagination are rendered
     expect(screen.getByText(/Showing/)).toBeInTheDocument();
