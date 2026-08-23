@@ -1,17 +1,6 @@
 import { fetchApi } from './fetchApi';
 import type { Customer } from '@/types/customer';
-
-export interface CursorPaginationInfo {
-  before: string | null;
-  after: string | null;
-  hasNext: boolean;
-  hasPrevious: boolean;
-}
-
-export interface CursorPaginatedResult<T> {
-  items: T[];
-  paging: CursorPaginationInfo;
-}
+import type { CursorPaginatedResult } from '@/types/pagination';
 
 export interface GetCustomersParams {
   searchText?: string;

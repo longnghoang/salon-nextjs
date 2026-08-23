@@ -57,7 +57,8 @@ lib/
 │   └── fetchApi.ts                    # Authenticated HTTP fetch wrapper
 ├── utils.ts                           # Formatting helpers (formatDateTime, toLocalDateString, getStatusName)
 types/
-└── order.ts                           # TypeScript interfaces (Order, OrderStatus, CursorPaginatedResult, etc.)
+├── pagination.ts                      # Shared cursor pagination interfaces (CursorPaginationInfo, CursorPaginatedResult)
+└── order.ts                           # TypeScript interfaces (Order, OrderStatus, etc.)
 tests/
 └── orders.test.tsx                    # Integration tests for table interactions and edit triggers
 ```
@@ -66,9 +67,23 @@ tests/
 
 ## 4. Data Models & API Contracts
 
-### Data Interfaces (`types/order.ts` & `lib/api/orderApi.ts`)
+### Data Interfaces (`types/pagination.ts`, `types/order.ts` & `lib/api/orderApi.ts`)
 
 ```typescript
+// types/pagination.ts
+export interface CursorPaginationInfo {
+  before: string | null;
+  after: string | null;
+  hasNext: boolean;
+  hasPrevious: boolean;
+}
+
+export interface CursorPaginatedResult<T> {
+  items: T[];
+  paging: CursorPaginationInfo;
+}
+
+// types/order.ts
 export enum OrderStatus {
   New = 1,
   InProgress = 2,
@@ -97,18 +112,7 @@ export interface Order {
   updatedDateTime: string | null;
 }
 
-export interface CursorPaginationInfo {
-  before: string | null;
-  after: string | null;
-  hasNext: boolean;
-  hasPrevious: boolean;
-}
-
-export interface CursorPaginatedResult<T> {
-  items: T[];
-  paging: CursorPaginationInfo;
-}
-
+// lib/api/orderApi.ts
 export interface GetOrdersParams {
   startDate?: string;
   endDate?: string;

@@ -1,5 +1,6 @@
 import { fetchApi } from './fetchApi';
 import type { Order, OrderStatus, OrderWithDetails } from '@/types/order';
+import type { CursorPaginatedResult } from '@/types/pagination';
 import { toLocalDateString } from '@/lib/utils';
 
 export interface GetOrdersParams {
@@ -10,18 +11,6 @@ export interface GetOrdersParams {
   before?: string;
   after?: string;
   includeOrderDetailEmployee?: boolean;
-}
-
-export interface CursorPaginationInfo {
-  before: string | null;
-  after: string | null;
-  hasNext: boolean;
-  hasPrevious: boolean;
-}
-
-export interface CursorPaginatedResult<T> {
-  items: T[];
-  paging: CursorPaginationInfo;
 }
 
 /**

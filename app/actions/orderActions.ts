@@ -1,7 +1,7 @@
 'use server';
 
 import { createOrder, getOrderById, updateOrder } from '@/lib/api/orderApi';
-import { getProducts } from '@/lib/api/productApi';
+import { getAllProducts } from '@/lib/api/productApi';
 import { getServices } from '@/lib/api/serviceApi';
 import { getEmployees } from '@/lib/api/employeeApi';
 import { getCustomers } from '@/lib/api/customerApi';
@@ -23,7 +23,7 @@ export async function updateOrderAction(
 }
 
 export async function getProductsAction() {
-  return await getProducts();
+  return await getAllProducts();
 }
 
 export async function getServicesAction() {
