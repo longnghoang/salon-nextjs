@@ -20,3 +20,13 @@ export interface GetProductsParams {
   before?: string;
   after?: string;
 }
+
+export interface ProductFormData {
+  name: string;
+  price: number;
+  buyingPrice?: number | null;
+  discountPrice?: number | null;
+  quantity?: number;
+  description?: string | null;
+  isActive?: boolean;
+}

@@ -3,6 +3,7 @@ import type { Product } from '@/types/product';
 import { ProductFilter } from '@/components/products/product-filter';
 import { ProductsCursorPagination } from '@/components/products/products-cursor-pagination';
 import { ProductsTable } from '@/components/products/products-table';
+import { AddProductDialog } from '@/components/products/product-form-dialog';
 
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
@@ -46,14 +47,18 @@ export default async function ProductsPage(props: {
 
   return (
     <div className="mx-auto flex w-full max-w-7xl animate-in flex-col gap-6 duration-700 fade-in">
-      <header className="mt-4 border-b border-border pb-6">
-        <h1 className="font-heading text-4xl tracking-tight text-foreground">
-          Products
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          Manage retail inventory and salon supplies.
-        </p>
+      <header className="mt-4 flex items-center justify-between border-b border-border pb-6">
+        <div>
+          <h1 className="font-heading text-4xl tracking-tight text-foreground">
+            Products
+          </h1>
+          <p className="mt-2 text-muted-foreground">
+            Manage retail inventory and salon supplies.
+          </p>
+        </div>
+        <AddProductDialog />
       </header>
+
       <ProductFilter />
       <div className="space-y-6">
         <ProductsTable products={displayProducts} errorMsg={errorMsg} />

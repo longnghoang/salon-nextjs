@@ -1,6 +1,10 @@
 import { fetchApi } from './fetchApi';
 import type { CursorPaginatedResult } from '@/types/pagination';
-import type { GetProductsParams, Product } from '@/types/product';
+import type {
+  GetProductsParams,
+  Product,
+  ProductFormData,
+} from '@/types/product';
 
 /**
  * Fetches cursor-paginated products from the backend Web API.
@@ -51,4 +55,36 @@ export async function getProducts(
 export async function getAllProducts(): Promise<Product[]> {
   const products = await fetchApi<Product[]>('/api/Products');
   return products || [];
+}
+
+/**
+ * Fetches a single product by ID.
+ */
+export async function getProductById(id: number): Promise<Product> {
+  return await fetchApi<Product>(`/api/Products/${id}`);
+}
+
+/**
+ * Creates a new product on the backend API.
+ */
+export async function createProduct(
+  product: ProductFormData | Partial<Product>
+): Promise<Product> {
+  return await fetchApi<Product>('/api/Products', {
+    method: 'POST',
+    body: JSON.stringify(product),
+  });
+}
+
+/**
+ * Updates an existing product on the backend API.
+ */
+export async function updateProduct(
+  id: number,
+  product: ProductFormData | Partial<Product>
+): Promise<Product> {
+  return await fetchApi<Product>(`/api/Products/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(product),
+  });
 }

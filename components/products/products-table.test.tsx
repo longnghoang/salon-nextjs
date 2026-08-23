@@ -1,7 +1,29 @@
-import { render, screen } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ProductsTable } from './products-table';
 import type { Product } from '@/types/product';
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    refresh: vi.fn(),
+  }),
+}));
+
+vi.mock('@/app/actions/productActions', () => ({
+  getProductAction: vi.fn().mockResolvedValue({
+    id: 1,
+    code: 'PROD-001',
+    name: 'Moroccan Argan Oil Shampoo',
+    price: 250000,
+    buyingPrice: 120000,
+    discountPrice: 220000,
+    quantity: 45,
+    description: 'Nourishing daily shampoo',
+    isActive: true,
+  }),
+  saveProductAction: vi.fn(),
+  updateProductAction: vi.fn(),
+}));
 
 const mockProducts: Product[] = [
   {
@@ -29,6 +51,10 @@ const mockProducts: Product[] = [
 ];
 
 describe('ProductsTable Component', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('renders table headers and product rows correctly', () => {
     render(<ProductsTable products={mockProducts} />);
 
@@ -52,6 +78,15 @@ describe('ProductsTable Component', () => {
     expect(screen.getByText('Keratin Hair Mask')).toBeInTheDocument();
     expect(screen.getByText('0')).toBeInTheDocument();
     expect(screen.getByText('Inactive')).toBeInTheDocument();
+  });
+
+  it('opens edit product dialog when clicking on product code button', async () => {
+    render(<ProductsTable products={mockProducts} />);
+
+    const editBtn = screen.getByRole('button', { name: /PROD-001/i });
+    fireEvent.click(editBtn);
+
+    expect(await screen.findByText('Edit Product')).toBeInTheDocument();
   });
 
   it('renders empty state when products array is empty', () => {

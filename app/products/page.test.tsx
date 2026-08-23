@@ -90,6 +90,9 @@ describe('ProductsPage Server Component', () => {
     expect(
       screen.getByText('Manage retail inventory and salon supplies.')
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Add Product/i })
+    ).toBeInTheDocument();
 
     // Check products rendered
     expect(screen.getByText('PROD-001')).toBeInTheDocument();
