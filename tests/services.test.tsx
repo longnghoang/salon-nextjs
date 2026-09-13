@@ -1,7 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getServices, getAllServices } from '@/lib/api/serviceApi';
+import {
+  getServices,
+  getAllServices,
+  getServiceById,
+  createService,
+  updateService,
+} from '@/lib/api/serviceApi';
 import { fetchApi } from '@/lib/api/fetchApi';
-import type { Service } from '@/types/service';
+import type { Service, ServiceFormData } from '@/types/service';
 
 vi.mock('@/lib/api/fetchApi', () => ({
   fetchApi: vi.fn(),
@@ -91,5 +97,58 @@ describe('Service API Client Functions', () => {
     const result = await getAllServices();
     expect(fetchApi).toHaveBeenCalledWith('/api/Services');
     expect(result).toHaveLength(2);
+  });
+
+  it('getServiceById calls GET /api/Services/{id}', async () => {
+    vi.mocked(fetchApi).mockResolvedValueOnce(mockServices[0]);
+
+    const result = await getServiceById(1);
+    expect(fetchApi).toHaveBeenCalledWith('/api/Services/1');
+    expect(result).toEqual(mockServices[0]);
+  });
+
+  it('createService calls POST /api/Services with JSON payload', async () => {
+    const payload: ServiceFormData = {
+      name: 'Scalp Treatment',
+      price: 350000,
+      discountPrice: 300000,
+      commission: 12,
+      description: 'Relaxing scalp massage and treatment',
+      isActive: true,
+    };
+
+    vi.mocked(fetchApi).mockResolvedValueOnce({
+      id: 3,
+      code: 'SRV-003',
+      ...payload,
+    });
+
+    const result = await createService(payload);
+    expect(fetchApi).toHaveBeenCalledWith('/api/Services', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    expect(result.id).toBe(3);
+    expect(result.name).toBe('Scalp Treatment');
+  });
+
+  it('updateService calls PUT /api/Services/{id} with JSON payload', async () => {
+    const payload: Partial<Service> = {
+      id: 1,
+      name: 'Haircut & Styling Deluxe',
+      price: 220000,
+    };
+
+    vi.mocked(fetchApi).mockResolvedValueOnce({
+      ...mockServices[0],
+      ...payload,
+    });
+
+    const result = await updateService(1, payload);
+    expect(fetchApi).toHaveBeenCalledWith('/api/Services/1', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+    expect(result.name).toBe('Haircut & Styling Deluxe');
   });
 });

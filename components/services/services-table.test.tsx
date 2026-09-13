@@ -1,7 +1,28 @@
-import { render, screen } from '@testing-library/react';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ServicesTable } from './services-table';
 import type { Service } from '@/types/service';
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    refresh: vi.fn(),
+  }),
+}));
+
+vi.mock('@/app/actions/serviceActions', () => ({
+  getServiceAction: vi.fn().mockResolvedValue({
+    id: 1,
+    code: 'SRV-001',
+    name: 'Haircut & Styling',
+    description: 'Includes shampoo and blow dry',
+    price: 200000,
+    discountPrice: 180000,
+    commission: 15,
+    isActive: true,
+  }),
+  saveServiceAction: vi.fn(),
+  updateServiceAction: vi.fn(),
+}));
 
 const mockServices: Service[] = [
   {
@@ -27,7 +48,9 @@ const mockServices: Service[] = [
 ];
 
 describe('ServicesTable Component', () => {
-  beforeEach(() => {});
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('renders table headers and service rows correctly', () => {
     render(<ServicesTable services={mockServices} />);
@@ -53,6 +76,15 @@ describe('ServicesTable Component', () => {
     expect(screen.getByText('SRV-002')).toBeInTheDocument();
     expect(screen.getByText('Basic Shave')).toBeInTheDocument();
     expect(screen.getByText('Inactive')).toBeInTheDocument();
+  });
+
+  it('opens edit service dialog when clicking on service code button', async () => {
+    render(<ServicesTable services={mockServices} />);
+
+    const editBtn = screen.getByRole('button', { name: /SRV-001/i });
+    fireEvent.click(editBtn);
+
+    expect(await screen.findByText('Edit Service')).toBeInTheDocument();
   });
 
   it('renders empty state message when services list is empty', () => {

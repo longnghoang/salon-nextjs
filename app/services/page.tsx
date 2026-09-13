@@ -3,8 +3,7 @@ import type { Service } from '@/types/service';
 import { ServiceFilter } from '@/components/services/service-filter';
 import { ServicesCursorPagination } from '@/components/services/services-cursor-pagination';
 import { ServicesTable } from '@/components/services/services-table';
-import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { AddServiceDialog } from '@/components/services/service-form-dialog';
 
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
@@ -57,10 +56,7 @@ export default async function ServicesPage(props: {
             Manage salon service catalog, pricing, and promotions.
           </p>
         </div>
-        <Button className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          <span>Add Service</span>
-        </Button>
+        <AddServiceDialog />
       </header>
 
       <ServiceFilter />

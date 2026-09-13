@@ -15,6 +15,15 @@ export interface Service {
   updatedDateTime?: string | null;
 }
 
+export interface ServiceFormData {
+  name: string;
+  price: number;
+  discountPrice?: number | null;
+  commission?: number | null;
+  description?: string | null;
+  isActive?: boolean;
+}
+
 export interface GetServicesParams {
   searchText?: string;
   pageSize?: number;

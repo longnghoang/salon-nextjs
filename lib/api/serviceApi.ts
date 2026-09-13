@@ -1,6 +1,10 @@
 import { fetchApi } from './fetchApi';
 import type { CursorPaginatedResult } from '@/types/pagination';
-import type { GetServicesParams, Service } from '@/types/service';
+import type {
+  GetServicesParams,
+  Service,
+  ServiceFormData,
+} from '@/types/service';
 
 /**
  * Fetches cursor-paginated services from the backend Web API.
@@ -51,4 +55,36 @@ export async function getServices(
 export async function getAllServices(): Promise<Service[]> {
   const services = await fetchApi<Service[]>('/api/Services');
   return services || [];
+}
+
+/**
+ * Fetches a single service by ID.
+ */
+export async function getServiceById(id: number): Promise<Service> {
+  return await fetchApi<Service>(`/api/Services/${id}`);
+}
+
+/**
+ * Creates a new service on the backend API.
+ */
+export async function createService(
+  service: ServiceFormData | Partial<Service>
+): Promise<Service> {
+  return await fetchApi<Service>('/api/Services', {
+    method: 'POST',
+    body: JSON.stringify(service),
+  });
+}
+
+/**
+ * Updates an existing service on the backend API.
+ */
+export async function updateService(
+  id: number,
+  service: ServiceFormData | Partial<Service>
+): Promise<Service> {
+  return await fetchApi<Service>(`/api/Services/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(service),
+  });
 }

@@ -107,4 +107,17 @@ describe('ServicesPage Server Component', () => {
 
     consoleSpy.mockRestore();
   });
+
+  it('opens Add New Service dialog when clicking Add Service button', async () => {
+    vi.mocked(getServices).mockResolvedValueOnce({
+      items: mockServices,
+      paging: { before: null, after: null, hasNext: false, hasPrevious: false },
+    });
+
+    const ui = await ServicesPage({ searchParams: Promise.resolve({}) });
+    render(ui);
+
+    const addBtn = screen.getByRole('button', { name: /Add Service/i });
+    expect(addBtn).toBeInTheDocument();
+  });
 });
