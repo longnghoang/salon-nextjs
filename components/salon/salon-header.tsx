@@ -45,6 +45,7 @@ import {
 const links = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/orders', label: 'Orders', icon: ShoppingCart },
+  { href: '/services', label: 'Services', icon: Scissors },
   { href: '/products', label: 'Products', icon: Package },
   { href: '/customers', label: 'Customers', icon: Users },
   { href: '/reports', label: 'Reports', icon: BarChart },

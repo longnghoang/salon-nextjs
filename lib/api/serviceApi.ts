@@ -1,7 +1,54 @@
 import { fetchApi } from './fetchApi';
-import type { Service } from '@/types/service';
+import type { CursorPaginatedResult } from '@/types/pagination';
+import type { GetServicesParams, Service } from '@/types/service';
 
-export async function getServices(): Promise<Service[]> {
+/**
+ * Fetches cursor-paginated services from the backend Web API.
+ * @param params Search and cursor pagination parameters
+ * @returns A promise resolving to a cursor-paginated result of services
+ */
+export async function getServices(
+  params?: GetServicesParams
+): Promise<CursorPaginatedResult<Service>> {
+  const searchParams = new URLSearchParams();
+
+  if (params?.searchText) {
+    searchParams.set('SearchText', params.searchText);
+  }
+
+  if (params?.pageSize !== undefined) {
+    searchParams.set('PageSize', String(params.pageSize));
+  }
+
+  if (params?.before !== undefined) {
+    searchParams.set('Before', params.before);
+  }
+
+  if (params?.after !== undefined) {
+    searchParams.set('After', params.after);
+  }
+
+  const queryString = searchParams.toString();
+  const endpoint = queryString
+    ? `/api/Services/cursor?${queryString}`
+    : '/api/Services/cursor';
+
+  const response = await fetchApi<CursorPaginatedResult<Service>>(endpoint);
+
+  if (!response || !response.items) {
+    return {
+      items: [],
+      paging: { before: null, after: null, hasNext: false, hasPrevious: false },
+    };
+  }
+
+  return response;
+}
+
+/**
+ * Fetches all services (flat list).
+ */
+export async function getAllServices(): Promise<Service[]> {
   const services = await fetchApi<Service[]>('/api/Services');
   return services || [];
 }

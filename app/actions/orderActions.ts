@@ -2,7 +2,7 @@
 
 import { createOrder, getOrderById, updateOrder } from '@/lib/api/orderApi';
 import { getAllProducts } from '@/lib/api/productApi';
-import { getServices } from '@/lib/api/serviceApi';
+import { getAllServices } from '@/lib/api/serviceApi';
 import { getEmployees } from '@/lib/api/employeeApi';
 import { getCustomers } from '@/lib/api/customerApi';
 import type { OrderWithDetails } from '@/types/order';
@@ -27,7 +27,7 @@ export async function getProductsAction() {
 }
 
 export async function getServicesAction() {
-  return await getServices();
+  return await getAllServices();
 }
 
 export async function getEmployeesAction() {
