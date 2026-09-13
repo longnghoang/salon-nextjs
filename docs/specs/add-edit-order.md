@@ -185,13 +185,19 @@ export interface OrderFormDialogProps {
    - **Staff Commission Assignment**: Multi-select popover to assign staff members per service line; automatically splits total commission percentage evenly across assigned staff (customizable per staff).
    - **Row Actions**: Add row or remove row (preserves at least one row).
 
-3. **Financial Summary & Calculations**:
+3. **Financial Summary & Calculations (Right Section Card)**:
    - **Subtotal (Tạm tính)**: $\sum (\text{Price} \times \text{Quantity} - \text{Line Discount})$
-   - **Order Discount (-) & VAT (+)**: Synchronized percentage vs absolute amount inputs.
+   - **Order Discount (Giảm giá đơn hàng)**: Consolidated inline input in the right summary card with thousand separators and real-time total recalculation.
+   - **VAT (Thuế VAT)**: Consolidated synchronized percentage (%) and amount (đ) inputs in the right summary card.
    - **Grand Total (Tổng cộng)**: $\max(0, \text{Subtotal} - \text{Order Discount} + \text{VAT})$
+   - **Payment Amount (Số tiền thanh toán)**: Input formatted with thousand separators (e.g. `250,000` VND) to enter paid amount.
+   - **Remaining Amount (Còn lại)**: $\max(0, \text{Grand Total} - \text{Payment Amount})$ auto-calculated in real time.
+   - **Payment Status (`isPayment`)**: Automatically marked as `true` whenever $\text{Payment Amount} > 0$, otherwise `false`.
+   - **Bank Transfer (`isBanking`)**: Checkbox indicating bank transfer payment (default: `false`).
 
 4. **Submission Lifecycle**:
    - Validates non-empty item selection and positive quantities.
+   - Preserves existing order `status` (or defaults to `OrderStatus.New`), and persists `status`, `isBanking`, `paymentAmount`, `remainingAmount`, and `isPayment` in the payload.
    - Displays spinner state on the submit button.
    - On success: closes dialog, resets internal state, and calls `router.refresh()` to refresh the server component list.
 

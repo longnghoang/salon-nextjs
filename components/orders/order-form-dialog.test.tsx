@@ -63,10 +63,12 @@ const mockExistingOrder: OrderWithDetails = {
   customerMobile: '0123456789',
   customerEmail: 'alice@example.com',
   amount: 195000,
-  paymentAmount: 0,
-  remainingAmount: 195000,
-  status: 1,
-  statusName: 'New',
+  paymentAmount: 50000,
+  remainingAmount: 145000,
+  status: 2, // OrderStatus.InProgress (Ghi nợ)
+  statusName: 'Ghi nợ',
+  isBanking: true,
+  isPayment: true,
   totalCommissionAmount: 20000,
   createdBy: 'admin',
   createdDateTime: '2026-08-01T10:00:00Z',
@@ -173,6 +175,40 @@ describe('OrderFormDialog - Edit Mode', () => {
 
     // Check pre-populated service item
     expect(screen.getByText('Hair Cut')).toBeInTheDocument();
+
+    // Check payment pre-population with thousand separator
+    const bankCheckbox = screen.getByLabelText(/bank transfer|chuyển khoản/i);
+    expect(bankCheckbox).toBeChecked();
+    const paymentInput = screen.getByLabelText(
+      /payment amount|số tiền thanh toán/i
+    );
+    expect(paymentInput).toHaveValue('50,000');
+    expect(screen.getByTestId('remaining-amount')).toHaveTextContent(
+      /145\.000/
+    );
+  });
+
+  it('recalculates remaining amount dynamically and formats input with thousand separators', async () => {
+    render(
+      <OrderFormDialog
+        mode="edit"
+        orderId={101}
+        open={true}
+        onOpenChange={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(orderActions.getOrderAction).toHaveBeenCalledWith(101);
+    });
+
+    const paymentInput = screen.getByLabelText(
+      /payment amount|số tiền thanh toán/i
+    );
+    fireEvent.change(paymentInput, { target: { value: '195000' } });
+
+    expect(paymentInput).toHaveValue('195,000');
+    expect(screen.getByTestId('remaining-amount')).toHaveTextContent(/0/);
   });
 
   it('submits updated order payload via updateOrderAction when Update Order is clicked', async () => {
@@ -204,6 +240,74 @@ describe('OrderFormDialog - Edit Mode', () => {
     expect(calledPayload.orderDetails?.[0].orderDetailEmployees?.[0].id).toBe(
       5
     );
+    expect(calledPayload.status).toBe(2);
+    expect(calledPayload.isBanking).toBe(true);
+    expect(calledPayload.paymentAmount).toBe(50000);
+    expect(calledPayload.remainingAmount).toBe(145000);
+    expect(calledPayload.isPayment).toBe(true);
+  });
+
+  it('marks isPayment as false when payment amount is 0', async () => {
+    render(
+      <OrderFormDialog
+        mode="edit"
+        orderId={101}
+        open={true}
+        onOpenChange={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(orderActions.getOrderAction).toHaveBeenCalledWith(101);
+    });
+
+    const paymentInput = screen.getByLabelText(
+      /payment amount|số tiền thanh toán/i
+    );
+    fireEvent.change(paymentInput, { target: { value: '0' } });
+
+    const updateBtn = screen.getByRole('button', { name: 'Update Order' });
+    fireEvent.click(updateBtn);
+
+    await waitFor(() => {
+      expect(orderActions.updateOrderAction).toHaveBeenCalledTimes(1);
+    });
+
+    const [, calledPayload] = vi.mocked(orderActions.updateOrderAction).mock
+      .calls[0];
+    expect(calledPayload.paymentAmount).toBe(0);
+    expect(calledPayload.isPayment).toBe(false);
+  });
+
+  it('toggles bank transfer checkbox and submits updated value', async () => {
+    render(
+      <OrderFormDialog
+        mode="edit"
+        orderId={101}
+        open={true}
+        onOpenChange={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(orderActions.getOrderAction).toHaveBeenCalledWith(101);
+    });
+
+    const bankCheckbox = screen.getByLabelText(/bank transfer|chuyển khoản/i);
+    expect(bankCheckbox).toBeChecked();
+    fireEvent.click(bankCheckbox);
+    expect(bankCheckbox).not.toBeChecked();
+
+    const updateBtn = screen.getByRole('button', { name: 'Update Order' });
+    fireEvent.click(updateBtn);
+
+    await waitFor(() => {
+      expect(orderActions.updateOrderAction).toHaveBeenCalledTimes(1);
+    });
+
+    const [, calledPayload] = vi.mocked(orderActions.updateOrderAction).mock
+      .calls[0];
+    expect(calledPayload.isBanking).toBe(false);
   });
 
   it('displays error message when getOrderAction fails in edit mode', async () => {
@@ -225,5 +329,53 @@ describe('OrderFormDialog - Edit Mode', () => {
         screen.getByText('Failed to load data. Please try again.')
       ).toBeInTheDocument();
     });
+  });
+
+  it('allows updating Order Discount and VAT in the calculation section and updates grand total', async () => {
+    render(
+      <OrderFormDialog
+        mode="edit"
+        orderId={101}
+        open={true}
+        onOpenChange={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(orderActions.getOrderAction).toHaveBeenCalledWith(101);
+    });
+
+    const discountInput = screen.getByLabelText(
+      /order discount|giảm giá đơn hàng/i
+    );
+    const vatPercentInput = screen.getByLabelText(
+      /vat percentage|vat percent/i
+    );
+    const vatAmountInput = screen.getByLabelText(/vat amount/i);
+
+    expect(discountInput).toHaveValue('10,000');
+    expect(vatAmountInput).toHaveValue('5,000');
+
+    // Update discount to 20,000
+    fireEvent.change(discountInput, { target: { value: '20000' } });
+    expect(discountInput).toHaveValue('20,000');
+
+    // Update VAT percent to 10%
+    fireEvent.change(vatPercentInput, { target: { value: '10' } });
+    // taxable is 200,000 - 20,000 = 180,000. 10% VAT is 18,000.
+    expect(vatAmountInput).toHaveValue('18,000');
+
+    const updateBtn = screen.getByRole('button', { name: 'Update Order' });
+    fireEvent.click(updateBtn);
+
+    await waitFor(() => {
+      expect(orderActions.updateOrderAction).toHaveBeenCalledTimes(1);
+    });
+
+    const [, calledPayload] = vi.mocked(orderActions.updateOrderAction).mock
+      .calls[0];
+    expect(calledPayload.discountAmount).toBe(20000);
+    expect(calledPayload.vat).toBe(18000);
+    expect(calledPayload.amount).toBe(198000);
   });
 });

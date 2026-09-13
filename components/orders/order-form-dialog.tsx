@@ -42,7 +42,11 @@ import type { Product } from '@/types/product';
 import type { Service } from '@/types/service';
 import type { Employee } from '@/types/employee';
 import type { Customer } from '@/types/customer';
-import type { OrderDetail, OrderDetailEmployee } from '@/types/order';
+import {
+  OrderStatus,
+  type OrderDetail,
+  type OrderDetailEmployee,
+} from '@/types/order';
 
 interface UIOrderDetail {
   id?: number;
@@ -464,6 +468,13 @@ export function OrderFormDialog({
   const [vatPercent, setVatPercent] = React.useState(0);
   const [vatValue, setVatValue] = React.useState(0);
 
+  // Lifecycle & Payment Details
+  const [orderStatus, setOrderStatus] = React.useState<OrderStatus>(
+    OrderStatus.New
+  );
+  const [isBanking, setIsBanking] = React.useState(false);
+  const [paymentAmount, setPaymentAmount] = React.useState(0);
+
   // Submission & Loading State
   const [isLoadingOrder, setIsLoadingOrder] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
@@ -496,6 +507,9 @@ export function OrderFormDialog({
     setOrderDiscountValue(0);
     setVatPercent(0);
     setVatValue(0);
+    setOrderStatus(OrderStatus.New);
+    setIsBanking(false);
+    setPaymentAmount(0);
     setErrorMsg('');
   }, []);
 
@@ -598,8 +612,26 @@ export function OrderFormDialog({
             setOrderDetails(mappedUIItems);
           }
 
-          setOrderDiscountValue(orderData.discountAmount || 0);
-          setVatValue(orderData.vat || 0);
+          const discount = orderData.discountAmount || 0;
+          const orderVat = orderData.vat || 0;
+          setOrderDiscountValue(discount);
+          setVatValue(orderVat);
+
+          let loadedSubtotal = 0;
+          if (orderData.orderDetails) {
+            for (const d of orderData.orderDetails) {
+              loadedSubtotal +=
+                (d.price || 0) * (d.quantity || 1) - (d.discountAmount || 0);
+            }
+          }
+          const taxable = Math.max(0, loadedSubtotal - discount);
+          if (taxable > 0 && orderVat > 0) {
+            setVatPercent((orderVat / taxable) * 100);
+          }
+
+          setOrderStatus(orderData.status ?? OrderStatus.New);
+          setIsBanking(Boolean(orderData.isBanking));
+          setPaymentAmount(orderData.paymentAmount ?? 0);
         }
       } catch (err) {
         console.error('Failed to load order form data:', err);
@@ -646,6 +678,24 @@ export function OrderFormDialog({
       style: 'currency',
       currency: 'VND',
     }).format(value);
+  };
+
+  const formatNumberWithCommas = (
+    value: number | string | null | undefined
+  ): string => {
+    if (value === null || value === undefined || value === '') return '';
+    const digits = String(value).replace(/\D/g, '');
+    if (!digits) return '';
+    const num = parseInt(digits, 10);
+    return isNaN(num) ? '' : num.toLocaleString('en-US');
+  };
+
+  const parseNumberWithCommas = (value: string | null | undefined): number => {
+    if (!value) return 0;
+    const digits = value.replace(/\D/g, '');
+    if (!digits) return 0;
+    const num = parseInt(digits, 10);
+    return isNaN(num) ? 0 : num;
   };
 
   // Stepper handlers
@@ -719,6 +769,8 @@ export function OrderFormDialog({
   }, [subtotal, orderDiscountValue, vatPercent]);
 
   const grandTotal = Math.max(0, subtotal - orderDiscountValue + vatValue);
+  const remainingAmount = Math.max(0, grandTotal - paymentAmount);
+  const isPayment = paymentAmount > 0;
 
   // Add line item row
   const addLineItem = () => {
@@ -991,11 +1043,11 @@ export function OrderFormDialog({
         discountAmount: orderDiscountValue,
         vat: vatValue,
         amount: grandTotal,
-        paymentAmount: 0,
-        remainingAmount: grandTotal,
-        status: 1, // Status: New
-        isPayment: false,
-        isBanking: false,
+        paymentAmount: paymentAmount,
+        remainingAmount: remainingAmount,
+        status: orderStatus,
+        isPayment: isPayment,
+        isBanking: isBanking,
         orderDetails: mappedDetails,
       };
 
@@ -1503,96 +1555,179 @@ export function OrderFormDialog({
               </div>
             </div>
 
-            {/* Footer calculations & submission buttons */}
-            <div className="grid grid-cols-1 items-end gap-6 border-t border-border pt-6 md:grid-cols-2">
-              {/* Discount & VAT inputs */}
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="flex items-center text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                      Order Discount (-)
+            {/* Financial Summary Card */}
+            <div className="border-t border-border pt-6">
+              <div className="w-full rounded-lg border border-border bg-muted/20 p-4 text-sm md:p-6">
+                <div className="ml-auto w-full space-y-3 md:max-w-md">
+                  <div className="flex items-center justify-between font-medium text-muted-foreground">
+                    <span className="text-xs">Tạm tính (Subtotal):</span>
+                    <span className="text-sm font-semibold text-foreground">
+                      {formatVND(subtotal)}
+                    </span>
+                  </div>
+
+                  {/* Order Discount */}
+                  <div className="flex items-center justify-between gap-3">
+                    <label
+                      htmlFor="order-discount-input"
+                      className="text-xs font-medium whitespace-nowrap text-muted-foreground"
+                    >
+                      Giảm giá (Order Discount):
                     </label>
-                    <div className="relative w-full">
+                    <div className="relative w-44 sm:w-48">
                       <Input
-                        type="number"
-                        value={orderDiscountValue || ''}
+                        id="order-discount-input"
+                        type="text"
+                        inputMode="numeric"
+                        value={
+                          orderDiscountValue
+                            ? formatNumberWithCommas(orderDiscountValue)
+                            : ''
+                        }
                         onChange={(e) =>
                           handleGlobalDiscountValueChange(
-                            parseFloat(e.target.value) || 0
+                            parseNumberWithCommas(e.target.value)
                           )
                         }
                         placeholder="0"
-                        className="pr-6 text-xs font-semibold"
+                        className="h-8 pr-6 text-right text-xs font-semibold"
+                        aria-label="Order Discount (Giảm giá đơn hàng)"
                       />
-                      <span className="absolute top-1/2 right-2.5 -translate-y-1/2 text-xs font-medium text-muted-foreground">
+                      <span className="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 text-xs font-medium text-muted-foreground">
                         đ
                       </span>
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="flex items-center text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                      VAT (+)
+                  {/* VAT */}
+                  <div className="flex items-center justify-between gap-3">
+                    <label
+                      htmlFor="order-vat-percent-input"
+                      className="text-xs font-medium whitespace-nowrap text-muted-foreground"
+                    >
+                      Thuế (VAT):
                     </label>
-                    <div className="flex items-center space-x-2">
-                      <div className="relative flex-1">
+                    <div className="flex w-44 items-center gap-1.5 sm:w-48">
+                      <div className="relative w-16 shrink-0">
                         <Input
+                          id="order-vat-percent-input"
                           type="number"
-                          value={vatPercent || ''}
+                          min="0"
+                          max="100"
+                          step="any"
+                          value={
+                            vatPercent ? parseFloat(vatPercent.toFixed(2)) : ''
+                          }
                           onChange={(e) =>
                             handleVatPercentChange(
                               parseFloat(e.target.value) || 0
                             )
                           }
                           placeholder="0"
-                          className="pr-6 text-xs font-semibold"
+                          className="h-8 pr-5 text-right text-xs font-semibold"
+                          aria-label="VAT percentage"
                         />
-                        <span className="absolute top-1/2 right-2.5 -translate-y-1/2 text-xs font-medium text-muted-foreground">
+                        <span className="pointer-events-none absolute top-1/2 right-1.5 -translate-y-1/2 text-xs font-medium text-muted-foreground">
                           %
                         </span>
                       </div>
-                      <div className="relative flex-1">
+                      <div className="relative min-w-0 flex-1">
                         <Input
-                          type="number"
-                          value={vatValue || ''}
+                          id="order-vat-value-input"
+                          type="text"
+                          inputMode="numeric"
+                          value={
+                            vatValue ? formatNumberWithCommas(vatValue) : ''
+                          }
                           onChange={(e) =>
                             handleVatValueChange(
-                              parseFloat(e.target.value) || 0
+                              parseNumberWithCommas(e.target.value)
                             )
                           }
                           placeholder="0"
-                          className="pr-6 text-xs font-semibold"
+                          className="h-8 pr-6 text-right text-xs font-semibold"
+                          aria-label="VAT amount"
                         />
-                        <span className="absolute top-1/2 right-2.5 -translate-y-1/2 text-xs font-medium text-muted-foreground">
+                        <span className="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 text-xs font-medium text-muted-foreground">
                           đ
                         </span>
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
 
-              {/* Pricing Totals Card */}
-              <div className="space-y-2.5 rounded-lg border border-border bg-muted/20 p-4 text-sm">
-                <div className="flex justify-between font-medium text-muted-foreground">
-                  <span>Tạm tính (Subtotal):</span>
-                  <span className="text-foreground">{formatVND(subtotal)}</span>
-                </div>
-                <div className="flex justify-between font-medium text-muted-foreground">
-                  <span>Giảm giá dịch vụ:</span>
-                  <span className="font-semibold text-destructive">
-                    -{formatVND(orderDiscountValue)}
-                  </span>
-                </div>
-                <div className="flex justify-between font-medium text-muted-foreground">
-                  <span>VAT:</span>
-                  <span className="text-foreground">{formatVND(vatValue)}</span>
-                </div>
-                <div className="my-2 flex justify-between border-t border-border/60 pt-2.5 text-base font-bold tracking-wide text-foreground">
-                  <span>Tổng cộng (Grand Total):</span>
-                  <span className="text-lg text-primary">
-                    {formatVND(grandTotal)}
-                  </span>
+                  <div className="my-2 flex items-center justify-between border-t border-border/60 pt-2.5 text-base font-bold tracking-wide text-foreground">
+                    <span className="text-xs font-bold text-foreground uppercase">
+                      Tổng cộng (Grand Total):
+                    </span>
+                    <span className="text-base font-bold text-primary">
+                      {formatVND(grandTotal)}
+                    </span>
+                  </div>
+
+                  {/* Payment Section */}
+                  <div className="space-y-3 border-t border-border/60 pt-3">
+                    <div className="flex items-center justify-between">
+                      <label
+                        htmlFor="bank-transfer-checkbox"
+                        className="flex cursor-pointer items-center gap-2 text-xs font-medium text-foreground select-none"
+                      >
+                        <input
+                          id="bank-transfer-checkbox"
+                          type="checkbox"
+                          checked={isBanking}
+                          onChange={(e) => setIsBanking(e.target.checked)}
+                          className="h-4 w-4 cursor-pointer rounded border-border accent-primary"
+                          aria-label="Bank Transfer (Chuyển khoản)"
+                        />
+                        <span>Bank Transfer (Chuyển khoản)</span>
+                      </label>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-3">
+                      <label
+                        htmlFor="payment-amount-input"
+                        className="text-xs font-medium whitespace-nowrap text-muted-foreground"
+                      >
+                        Số tiền thanh toán (Payment Amount):
+                      </label>
+                      <div className="relative w-44 sm:w-48">
+                        <Input
+                          id="payment-amount-input"
+                          type="text"
+                          inputMode="numeric"
+                          value={formatNumberWithCommas(paymentAmount)}
+                          onChange={(e) =>
+                            setPaymentAmount(
+                              parseNumberWithCommas(e.target.value)
+                            )
+                          }
+                          placeholder="0"
+                          className="h-8 pr-6 text-right text-xs font-semibold"
+                          aria-label="Payment Amount (Số tiền thanh toán)"
+                        />
+                        <span className="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 text-xs font-medium text-muted-foreground">
+                          đ
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between border-t border-dashed border-border/60 pt-2 text-sm font-semibold">
+                      <span className="text-xs text-muted-foreground">
+                        Còn lại (Remaining Amount):
+                      </span>
+                      <span
+                        data-testid="remaining-amount"
+                        className={cn(
+                          'text-sm font-bold',
+                          remainingAmount === 0
+                            ? 'text-emerald-600 dark:text-emerald-400'
+                            : 'text-foreground'
+                        )}
+                      >
+                        {formatVND(remainingAmount)}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
