@@ -24,6 +24,7 @@ describe('OrderFilter', () => {
     expect(screen.getByText('Start:')).toBeInTheDocument();
     expect(screen.getByText('End:')).toBeInTheDocument();
     expect(screen.getByText('Status:')).toBeInTheDocument();
+    expect(screen.getByText('Tất cả trạng thái')).toBeInTheDocument();
     expect(screen.getByText('Apply')).toBeInTheDocument();
     expect(screen.getByText('Clear')).toBeInTheDocument();
   });

@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { OrderStatus } from '@/types/order';
-import { toLocalDateString, parseLocalDate } from '@/lib/utils';
+import { toLocalDateString, parseLocalDate, getStatusName } from '@/lib/utils';
 
 export function OrderFilter() {
   const router = useRouter();
@@ -153,19 +153,23 @@ export function OrderFilter() {
           Status:
         </span>
         <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="All Statuses" />
+          <SelectTrigger className="w-[170px]">
+            <SelectValue placeholder="Tất cả trạng thái" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value={String(OrderStatus.New)}>New</SelectItem>
+            <SelectItem value="all">Tất cả trạng thái</SelectItem>
+            <SelectItem value={String(OrderStatus.New)}>
+              {getStatusName(OrderStatus.New)}
+            </SelectItem>
             <SelectItem value={String(OrderStatus.InProgress)}>
-              In Progress
+              {getStatusName(OrderStatus.InProgress)}
             </SelectItem>
             <SelectItem value={String(OrderStatus.Completed)}>
-              Completed
+              {getStatusName(OrderStatus.Completed)}
             </SelectItem>
-            <SelectItem value={String(OrderStatus.Deleted)}>Deleted</SelectItem>
+            <SelectItem value={String(OrderStatus.Deleted)}>
+              {getStatusName(OrderStatus.Deleted)}
+            </SelectItem>
           </SelectContent>
         </Select>
       </div>

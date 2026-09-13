@@ -3,7 +3,7 @@
 ## 1. Objective
 Provide a server-rendered, responsive order management dashboard (`app/orders/page.tsx`) for salon staff and administrators to:
 1. **View Orders**: Browse salon orders with customer details, status badges, formatted currency totals, and localized dates.
-2. **Filter & Search**: Query orders within custom date ranges (defaulting to the last 30 days) and filter by lifecycle status (`New`, `In Progress`, `Completed`, `Deleted`, `All`).
+2. **Filter & Search**: Query orders within custom date ranges (defaulting to the last 30 days) and filter by lifecycle status (`Chờ thanh toán`, `Ghi nợ`, `Đã thanh toán`, `Đã trả lại`, and `Tất cả trạng thái`).
 3. **Cursor-Based Pagination**: Navigate forward and backward across large volumes of orders using opaque cursor tokens (`before`, `after`) while preserving active filters.
 4. **Seamless Actions**: Create new orders via `AddOrderDialog` from the header and trigger inline order editing via `OrderFormDialog` directly by clicking on any Order Code.
 
@@ -159,10 +159,10 @@ export interface GetOrdersParams {
 2. **Controls**:
    - **Start Date**: Calendar popover via `<DatePicker />`.
    - **End Date**: Calendar popover via `<DatePicker />`.
-   - **Status Dropdown**: `<Select>` containing `All Statuses`, `New`, `In Progress`, `Completed`, and `Deleted`.
+    - **Status Dropdown**: `<Select>` with `Tất cả trạng thái` and localized status labels mapped via `getStatusName`: `Chờ thanh toán` (`OrderStatus.New`), `Ghi nợ` (`OrderStatus.InProgress`), `Đã thanh toán` (`OrderStatus.Completed`), and `Đã trả lại` (`OrderStatus.Deleted`).
 3. **Actions**:
-   - **Apply**: Updates URL search parameters with selected date bounds and status; clears existing cursor parameters (`page`, `before`, `after`) to reset pagination.
-   - **Clear**: Resets filters to the default 30-day window and "All Statuses", clearing all URL parameters.
+    - **Apply**: Updates URL search parameters with selected date bounds and status; clears existing cursor parameters (`page`, `before`, `after`) to reset pagination.
+    - **Clear**: Resets filters to the default 30-day window and "Tất cả trạng thái", clearing all URL parameters.
 
 ### 5.3 Orders Table (`components/orders/orders-table.tsx`)
 
@@ -210,7 +210,7 @@ Renders a styled `<Badge variant="outline">` mapped to order statuses:
   - Verifies order list rendering with customer fallback, date formatting, and VND amount formatting.
   - Verifies graceful error handling and error banner when API fails.
 - **`components/orders/order-filter.test.tsx`**:
-  - Tests filter UI elements rendering (Start, End, Status, Apply, Clear).
+  - Tests filter UI elements rendering (Start, End, Status, 'Tất cả trạng thái', Apply, Clear).
   - Tests auto-population of default date params when URL query parameters are absent.
   - Tests router push actions on "Apply" and "Clear" clicks.
 - **`components/orders/orders-cursor-pagination.test.tsx`**:
