@@ -136,6 +136,16 @@ describe('OrdersTable Edit Order Integration', () => {
 
     expect(screen.getByText('Edit Order #ORD-101')).toBeInTheDocument();
   });
+
+  it('automatically opens Edit Order dialog when initialEditOrderId is provided', async () => {
+    render(<OrdersTable orders={mockOrders} initialEditOrderId={101} />);
+
+    await waitFor(() => {
+      expect(orderActions.getOrderAction).toHaveBeenCalledWith(101);
+    });
+
+    expect(screen.getByText('Edit Order #ORD-101')).toBeInTheDocument();
+  });
 });
 
 describe('OrderFormDialog in Edit Mode', () => {

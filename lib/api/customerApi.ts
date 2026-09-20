@@ -1,5 +1,6 @@
 import { fetchApi } from './fetchApi';
 import type { Customer } from '@/types/customer';
+import type { Order } from '@/types/order';
 import type { CursorPaginatedResult } from '@/types/pagination';
 
 export interface GetCustomersParams {
@@ -82,4 +83,27 @@ export async function updateCustomer(
     method: 'PUT',
     body: JSON.stringify(customer),
   });
+}
+
+/**
+ * Fetches order history for a specific customer.
+ */
+export async function getCustomerOrders(customerId: number): Promise<Order[]> {
+  const response = await fetchApi<Order[] | { items: Order[] }>(
+    `/api/Customers/${customerId}/orders`
+  );
+
+  if (!response) {
+    return [];
+  }
+
+  if (Array.isArray(response)) {
+    return response;
+  }
+
+  if ('items' in response && Array.isArray(response.items)) {
+    return response.items;
+  }
+
+  return [];
 }

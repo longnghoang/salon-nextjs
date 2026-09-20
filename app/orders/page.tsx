@@ -26,6 +26,10 @@ export default async function OrdersPage(props: {
     typeof searchParams.before === 'string' ? searchParams.before : undefined;
   const after =
     typeof searchParams.after === 'string' ? searchParams.after : undefined;
+  const orderId =
+    typeof searchParams.orderId === 'string'
+      ? parseInt(searchParams.orderId, 10)
+      : undefined;
   const pageSize = 20;
 
   let displayOrders: Order[] = [];
@@ -70,7 +74,11 @@ export default async function OrdersPage(props: {
       <OrderFilter />
 
       <div className="space-y-6">
-        <OrdersTable orders={displayOrders} errorMsg={errorMsg} />
+        <OrdersTable
+          orders={displayOrders}
+          errorMsg={errorMsg}
+          initialEditOrderId={orderId}
+        />
 
         <OrdersCursorPagination
           hasNext={hasNext}

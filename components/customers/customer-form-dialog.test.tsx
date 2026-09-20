@@ -10,11 +10,14 @@ import {
 } from './customer-form-dialog';
 import * as customerActions from '@/app/actions/customerActions';
 import type { Customer } from '@/types/customer';
+import { OrderStatus, type Order } from '@/types/order';
 
 // Mock Next.js router
+const mockPush = vi.fn();
 const mockRefresh = vi.fn();
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
+    push: mockPush,
     refresh: mockRefresh,
   }),
 }));
@@ -24,6 +27,7 @@ vi.mock('@/app/actions/customerActions', () => ({
   saveCustomerAction: vi.fn(),
   getCustomerAction: vi.fn(),
   updateCustomerAction: vi.fn(),
+  getCustomerOrdersAction: vi.fn(),
 }));
 
 const mockCustomer: Customer = {
@@ -40,6 +44,28 @@ const mockCustomer: Customer = {
   updatedBy: null,
   updatedDateTime: null,
 };
+
+const mockCustomerOrders: Order[] = [
+  {
+    id: 101,
+    code: 'ORD-101',
+    description: 'First order note',
+    orderDate: '2026-08-01T10:00:00Z',
+    customerId: 10,
+    customerName: 'Nguyen Van C',
+    customerMobile: '0901234567',
+    amount: 250000,
+    paymentAmount: 250000,
+    remainingAmount: 0,
+    status: OrderStatus.New,
+    statusName: 'New',
+    totalCommissionAmount: 0,
+    createdBy: 'admin',
+    createdDateTime: '2026-08-01T10:00:00Z',
+    updatedBy: null,
+    updatedDateTime: null,
+  },
+];
 
 describe('Phone and Date Helper Utilities', () => {
   it('formatMobileNumber formats 10 digits as ____ ___ ___', () => {
@@ -100,6 +126,7 @@ describe('CustomerFormDialog - Create Mode', () => {
     expect(
       screen.getByRole('button', { name: 'Save Customer' })
     ).toBeInTheDocument();
+    expect(screen.queryByText(/Order History/i)).not.toBeInTheDocument();
   });
 
   it('formats mobile input as ____ ___ ___ and date input as dd/MM/yyyy while typing', () => {
@@ -232,6 +259,9 @@ describe('CustomerFormDialog - Edit Mode', () => {
     vi.mocked(customerActions.getCustomerAction).mockResolvedValue(
       mockCustomer
     );
+    vi.mocked(customerActions.getCustomerOrdersAction).mockResolvedValue(
+      mockCustomerOrders
+    );
   });
 
   it('fetches customer by ID, displays code badge, and pre-populates fields', async () => {
@@ -318,6 +348,94 @@ describe('CustomerFormDialog - Edit Mode', () => {
       await screen.findByText(
         'Failed to load customer details. Please try again.'
       )
+    ).toBeInTheDocument();
+  });
+
+  it('renders Order History grid with columns, formatted date dd/MM/yyyy, status badge, note, and VND amount', async () => {
+    render(
+      <CustomerFormDialog
+        mode="edit"
+        customerId={10}
+        open={true}
+        onOpenChange={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(customerActions.getCustomerOrdersAction).toHaveBeenCalledWith(10);
+    });
+
+    expect(screen.getByText('Order History')).toBeInTheDocument();
+    expect(screen.getByText('ORD-101')).toBeInTheDocument();
+    expect(screen.getByText('01/08/2026')).toBeInTheDocument();
+    expect(screen.getByText('Chờ thanh toán')).toBeInTheDocument();
+    expect(screen.getByText('First order note')).toBeInTheDocument();
+    expect(screen.getByText(/250\.000/)).toBeInTheDocument();
+  });
+
+  it('navigates to /orders?orderId=101 and closes dialog when clicking Order Code button', async () => {
+    const handleOpenChange = vi.fn();
+    render(
+      <CustomerFormDialog
+        mode="edit"
+        customerId={10}
+        open={true}
+        onOpenChange={handleOpenChange}
+      />
+    );
+
+    await waitFor(() => {
+      expect(customerActions.getCustomerOrdersAction).toHaveBeenCalledWith(10);
+    });
+
+    const orderBtn = screen.getByRole('button', { name: /ORD-101/i });
+    fireEvent.click(orderBtn);
+
+    expect(handleOpenChange).toHaveBeenCalledWith(false);
+    expect(mockPush).toHaveBeenCalledWith('/orders?orderId=101');
+  });
+
+  it('displays empty state when customer has no orders', async () => {
+    vi.mocked(customerActions.getCustomerOrdersAction).mockResolvedValueOnce(
+      []
+    );
+
+    render(
+      <CustomerFormDialog
+        mode="edit"
+        customerId={10}
+        open={true}
+        onOpenChange={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(customerActions.getCustomerOrdersAction).toHaveBeenCalledWith(10);
+    });
+
+    expect(screen.getByText('No order history found.')).toBeInTheDocument();
+  });
+
+  it('displays error message when getCustomerOrdersAction fails', async () => {
+    vi.mocked(customerActions.getCustomerOrdersAction).mockRejectedValueOnce(
+      new Error('Orders fetch error')
+    );
+
+    render(
+      <CustomerFormDialog
+        mode="edit"
+        customerId={10}
+        open={true}
+        onOpenChange={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(customerActions.getCustomerOrdersAction).toHaveBeenCalledWith(10);
+    });
+
+    expect(
+      screen.getByText('Failed to load order history.')
     ).toBeInTheDocument();
   });
 });

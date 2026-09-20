@@ -29,14 +29,26 @@ import {
   MapPin,
   User,
   FileText,
+  Pencil,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { StatusBadge } from '@/components/orders/status-badge';
 import {
   saveCustomerAction,
   getCustomerAction,
   updateCustomerAction,
+  getCustomerOrdersAction,
 } from '@/app/actions/customerActions';
 import type { CustomerFormData } from '@/types/customer';
+import type { Order } from '@/types/order';
 
 /**
  * Formats a raw digit string into the 10-digit mask: ____ ___ ___ (e.g. '0901 234 567')
@@ -147,6 +159,11 @@ export function CustomerFormDialog({
   const [isSaving, setIsSaving] = React.useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
 
+  // Order history states
+  const [orders, setOrders] = React.useState<Order[]>([]);
+  const [isLoadingOrders, setIsLoadingOrders] = React.useState(false);
+  const [ordersError, setOrdersError] = React.useState<string | null>(null);
+
   // Parse valid date for calendar selection
   const selectedDate = React.useMemo(() => {
     return parseDateFromDDMMYYYY(birthDay);
@@ -163,6 +180,9 @@ export function CustomerFormDialog({
     setNote('');
     setErrors({});
     setIsCalendarOpen(false);
+    setOrders([]);
+    setIsLoadingOrders(false);
+    setOrdersError(null);
   }, []);
 
   const setIsOpen = React.useCallback(
@@ -179,7 +199,7 @@ export function CustomerFormDialog({
     [isControlled, controlledOnOpenChange, resetForm]
   );
 
-  // Fetch customer details if edit mode
+  // Fetch customer details and order history if edit mode
   React.useEffect(() => {
     if (!isOpen) return;
     let isMounted = true;
@@ -187,27 +207,47 @@ export function CustomerFormDialog({
     async function loadData() {
       if (mode === 'edit' && customerId) {
         setIsLoading(true);
+        setIsLoadingOrders(true);
         setErrors({});
+        setOrdersError(null);
+
         try {
-          const customer = await getCustomerAction(customerId);
+          const [customerResult, ordersResult] = await Promise.allSettled([
+            getCustomerAction(customerId),
+            getCustomerOrdersAction(customerId),
+          ]);
+
           if (!isMounted) return;
-          setCustomerCode(customer.code || null);
-          setFullName(customer.fullName || '');
-          setMobile(formatMobileNumber(customer.mobile || ''));
-          setBirthDay(formatDateToDDMMYYYY(customer.birthDay));
-          setEmail(customer.email || '');
-          setAddress(customer.address || '');
-          setNote(customer.note || '');
-        } catch (err) {
-          console.error('Failed to load customer:', err);
-          if (isMounted) {
+
+          if (customerResult.status === 'fulfilled') {
+            const customer = customerResult.value;
+            setCustomerCode(customer.code || null);
+            setFullName(customer.fullName || '');
+            setMobile(formatMobileNumber(customer.mobile || ''));
+            setBirthDay(formatDateToDDMMYYYY(customer.birthDay));
+            setEmail(customer.email || '');
+            setAddress(customer.address || '');
+            setNote(customer.note || '');
+          } else {
+            console.error('Failed to load customer:', customerResult.reason);
             setErrors({
               form: 'Failed to load customer details. Please try again.',
             });
           }
+
+          if (ordersResult.status === 'fulfilled') {
+            setOrders(ordersResult.value || []);
+          } else {
+            console.error(
+              'Failed to load customer orders:',
+              ordersResult.reason
+            );
+            setOrdersError('Failed to load order history.');
+          }
         } finally {
           if (isMounted) {
             setIsLoading(false);
+            setIsLoadingOrders(false);
           }
         }
       }
@@ -219,6 +259,11 @@ export function CustomerFormDialog({
       isMounted = false;
     };
   }, [isOpen, mode, customerId]);
+
+  const handleOrderClick = (order: Order) => {
+    setIsOpen(false);
+    router.push(`/orders?orderId=${order.id}`);
+  };
 
   const handleMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value;
@@ -357,7 +402,13 @@ export function CustomerFormDialog({
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent className="max-w-md sm:max-w-lg">
+      <DialogContent
+        className={cn(
+          'max-w-md sm:max-w-lg',
+          mode === 'edit' &&
+            'max-h-[90vh] overflow-y-auto sm:max-w-3xl lg:max-w-4xl'
+        )}
+      >
         <DialogHeader>
           <div className="flex items-center justify-between gap-2 pr-6">
             <DialogTitle className="text-xl font-semibold">
@@ -557,6 +608,98 @@ export function CustomerFormDialog({
                 className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
+
+            {mode === 'edit' && (
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between border-t border-border pt-4">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-semibold text-foreground">
+                      Order History
+                    </h3>
+                    <Badge variant="secondary" className="text-xs">
+                      {orders.length}
+                    </Badge>
+                  </div>
+                </div>
+
+                {isLoadingOrders ? (
+                  <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    <p className="mt-2 text-xs">Loading order history...</p>
+                  </div>
+                ) : ordersError ? (
+                  <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
+                    {ordersError}
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[120px]">
+                            Order Code
+                          </TableHead>
+                          <TableHead className="w-[110px]">
+                            Order Date
+                          </TableHead>
+                          <TableHead className="w-[130px]">Status</TableHead>
+                          <TableHead>Note</TableHead>
+                          <TableHead className="w-[120px] text-right">
+                            Amount
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {orders.length > 0 ? (
+                          orders.map((order) => (
+                            <TableRow key={order.id}>
+                              <TableCell className="font-medium">
+                                <button
+                                  type="button"
+                                  onClick={() => handleOrderClick(order)}
+                                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-primary/30 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary transition-all duration-150 hover:border-primary hover:bg-primary hover:text-primary-foreground focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-hidden"
+                                  title="Click to view order details"
+                                >
+                                  <span>{order.code}</span>
+                                  <Pencil className="h-3 w-3 opacity-70 transition-opacity" />
+                                </button>
+                              </TableCell>
+                              <TableCell>
+                                {formatDateToDDMMYYYY(order.orderDate)}
+                              </TableCell>
+                              <TableCell>
+                                <StatusBadge status={order.status} />
+                              </TableCell>
+                              <TableCell
+                                className="max-w-[200px] truncate"
+                                title={order.description || ''}
+                              >
+                                {order.description || '-'}
+                              </TableCell>
+                              <TableCell className="text-right font-medium">
+                                {new Intl.NumberFormat('vi-VN', {
+                                  style: 'currency',
+                                  currency: 'VND',
+                                }).format(order.amount)}
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell
+                              colSpan={5}
+                              className="py-6 text-center text-xs text-muted-foreground"
+                            >
+                              No order history found.
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </div>
+            )}
 
             <DialogFooter className="pt-3">
               <Button

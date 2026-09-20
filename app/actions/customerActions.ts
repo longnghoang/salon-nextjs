@@ -4,6 +4,7 @@ import {
   createCustomer,
   getCustomerById,
   updateCustomer,
+  getCustomerOrders,
 } from '@/lib/api/customerApi';
 import type { Customer, CustomerFormData } from '@/types/customer';
 
@@ -22,4 +23,8 @@ export async function updateCustomerAction(
   customer: CustomerFormData | Partial<Customer>
 ) {
   return await updateCustomer(id, customer);
+}
+
+export async function getCustomerOrdersAction(customerId: number) {
+  return await getCustomerOrders(customerId);
 }

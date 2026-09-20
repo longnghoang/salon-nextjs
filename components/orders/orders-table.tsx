@@ -18,13 +18,31 @@ import { Pencil } from 'lucide-react';
 interface OrdersTableProps {
   orders: Order[];
   errorMsg?: string;
+  initialEditOrderId?: number | null;
 }
 
-export function OrdersTable({ orders, errorMsg }: OrdersTableProps) {
+export function OrdersTable({
+  orders,
+  errorMsg,
+  initialEditOrderId,
+}: OrdersTableProps) {
+  const [prevInitialId, setPrevInitialId] = React.useState<
+    number | null | undefined
+  >(initialEditOrderId);
   const [editingOrderId, setEditingOrderId] = React.useState<number | null>(
-    null
+    initialEditOrderId ?? null
   );
-  const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(
+    Boolean(initialEditOrderId)
+  );
+
+  if (initialEditOrderId !== prevInitialId) {
+    setPrevInitialId(initialEditOrderId);
+    if (initialEditOrderId) {
+      setEditingOrderId(initialEditOrderId);
+      setIsEditDialogOpen(true);
+    }
+  }
 
   const handleOrderCodeClick = (orderId: number) => {
     setEditingOrderId(orderId);

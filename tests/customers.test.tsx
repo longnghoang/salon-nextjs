@@ -3,6 +3,7 @@ import {
   getCustomerById,
   createCustomer,
   updateCustomer,
+  getCustomerOrders,
 } from '@/lib/api/customerApi';
 import { fetchApi } from '@/lib/api/fetchApi';
 import type { Customer } from '@/types/customer';
@@ -77,5 +78,50 @@ describe('Customer API Client Functions', () => {
       body: JSON.stringify(updatePayload),
     });
     expect(result.fullName).toBe('Nguyen Van A Updated');
+  });
+
+  it('getCustomerOrders calls GET /api/Customers/{customerId}/orders and returns orders array', async () => {
+    const mockOrders = [
+      {
+        id: 101,
+        code: 'ORD-101',
+        orderDate: '2026-08-01T10:00:00Z',
+        status: 1,
+        statusName: 'New',
+        description: 'First order note',
+        amount: 250000,
+      },
+    ];
+    vi.mocked(fetchApi).mockResolvedValueOnce(mockOrders);
+
+    const result = await getCustomerOrders(1);
+    expect(fetchApi).toHaveBeenCalledWith('/api/Customers/1/orders');
+    expect(result).toHaveLength(1);
+    expect(result[0].code).toBe('ORD-101');
+    expect(result[0].amount).toBe(250000);
+  });
+
+  it('getCustomerOrders handles { items: [...] } envelope response and null response', async () => {
+    const mockOrders = [
+      {
+        id: 102,
+        code: 'ORD-102',
+        orderDate: '2026-08-02T10:00:00Z',
+        status: 3,
+        statusName: 'Completed',
+        description: '',
+        amount: 500000,
+      },
+    ];
+    vi.mocked(fetchApi).mockResolvedValueOnce({ items: mockOrders });
+
+    const result = await getCustomerOrders(1);
+    expect(fetchApi).toHaveBeenCalledWith('/api/Customers/1/orders');
+    expect(result).toHaveLength(1);
+    expect(result[0].code).toBe('ORD-102');
+
+    vi.mocked(fetchApi).mockResolvedValueOnce(null);
+    const emptyResult = await getCustomerOrders(1);
+    expect(emptyResult).toEqual([]);
   });
 });

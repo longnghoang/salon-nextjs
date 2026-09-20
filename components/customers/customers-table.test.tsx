@@ -16,6 +16,7 @@ vi.mock('@/app/actions/customerActions', () => ({
   saveCustomerAction: vi.fn(),
   getCustomerAction: vi.fn(),
   updateCustomerAction: vi.fn(),
+  getCustomerOrdersAction: vi.fn(),
 }));
 
 const mockCustomers: Customer[] = [
@@ -55,6 +56,7 @@ describe('CustomersTable Component', () => {
     vi.mocked(customerActions.getCustomerAction).mockResolvedValue(
       mockCustomers[0]
     );
+    vi.mocked(customerActions.getCustomerOrdersAction).mockResolvedValue([]);
   });
 
   it('renders table headers and customer rows correctly', () => {
