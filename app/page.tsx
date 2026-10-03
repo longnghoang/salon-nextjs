@@ -1,111 +1,104 @@
+import { auth } from '@/auth';
+import { getOrders } from '@/lib/api/orderApi';
+import { getCustomers } from '@/lib/api/customerApi';
+import { toLocalDateString } from '@/lib/utils';
+import { OrderStatus } from '@/types/order';
+import { DashboardHeader } from '@/components/salon/dashboard/dashboard-header';
 import { MetricCard } from '@/components/salon/dashboard/metric-card';
-import { AppointmentsList } from '@/components/salon/dashboard/appointments-list';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { RecentOrders } from '@/components/salon/dashboard/recent-orders';
+import { RecentCustomers } from '@/components/salon/dashboard/recent-customers';
 
-export default function SalonDashboard() {
+function formatCurrency(amount: number): string {
+  return `${amount.toLocaleString('vi-VN')} ₫`;
+}
+
+export default async function SalonDashboard() {
+  const today = new Date();
+  const todayStr = toLocalDateString(today);
+
+  const [
+    session,
+    todayOrdersResult,
+    recentOrdersResult,
+    recentCustomersResult,
+  ] = await Promise.all([
+    auth().catch(() => null),
+    getOrders({
+      startDate: todayStr,
+      endDate: todayStr,
+      pageSize: 100,
+    }).catch(() => ({ items: [] })),
+    getOrders({
+      pageSize: 5,
+    }).catch(() => ({ items: [] })),
+    getCustomers({
+      pageSize: 5,
+    }).catch(() => ({ items: [] })),
+  ]);
+
+  const todayOrders = todayOrdersResult?.items || [];
+  const recentOrders = recentOrdersResult?.items || [];
+  const recentCustomers = recentCustomersResult?.items || [];
+
+  const todayRevenue = todayOrders
+    .filter((order) => order.status !== OrderStatus.Deleted)
+    .reduce(
+      (sum, order) => sum + (order.paymentAmount || order.amount || 0),
+      0
+    );
+
+  const completedOrdersCount = todayOrders.filter(
+    (order) => order.status === OrderStatus.Completed
+  ).length;
+
+  const newCustomersToday = recentCustomers.filter((customer) => {
+    if (!customer.createdDateTime) return false;
+    const createdDate = toLocalDateString(new Date(customer.createdDateTime));
+    return createdDate === todayStr;
+  }).length;
+
   return (
-    <div className="mx-auto flex w-full max-w-7xl animate-in flex-col gap-10 duration-1000 fade-in slide-in-from-bottom-4">
+    <div className="mx-auto flex w-full max-w-7xl animate-in flex-col gap-10 duration-700 fade-in slide-in-from-bottom-2">
       {/* Header Section */}
-      <header className="mt-4 flex flex-col justify-between gap-6 border-b border-border pb-8 md:flex-row md:items-end">
-        <div>
-          <p className="mb-4 text-xs font-medium tracking-[0.2em] text-muted-foreground uppercase">
-            {new Date().toLocaleDateString('en-US', {
-              weekday: 'long',
-              month: 'long',
-              day: 'numeric',
-            })}
-          </p>
-          <h1 className="font-heading text-4xl tracking-tight text-foreground md:text-5xl lg:text-6xl">
-            Good morning, <span className="text-accent italic">Sarah</span>.
-          </h1>
-        </div>
-        <div className="flex items-center gap-4">
-          <Avatar className="h-16 w-16 border border-border/50">
-            <AvatarImage src="https://i.pravatar.cc/150?u=sarah" alt="Sarah" />
-            <AvatarFallback>SA</AvatarFallback>
-          </Avatar>
-        </div>
-      </header>
+      <DashboardHeader userName={session?.user?.name} />
 
       {/* Metrics Section */}
-      <section className="grid grid-cols-1 gap-12 py-4 md:grid-cols-3 md:gap-16">
+      <section className="grid grid-cols-1 gap-8 py-2 sm:grid-cols-2 md:grid-cols-3 md:gap-12">
         <MetricCard
           title="Today's Revenue"
-          value="$1,240"
-          trend="+12% vs last week"
-          trendUp={true}
+          value={formatCurrency(todayRevenue)}
+          trend={
+            todayOrders.length > 0
+              ? `${completedOrdersCount}/${todayOrders.length} completed`
+              : 'No orders yet'
+          }
+          trendUp={todayRevenue > 0 ? true : null}
         />
         <MetricCard
-          title="New Bookings"
-          value="8"
-          trend="Steady"
+          title="Today's Orders"
+          value={String(todayOrders.length)}
+          trend={
+            todayOrders.length > 0
+              ? `${todayOrders.length - completedOrdersCount} pending payment`
+              : 'No active orders'
+          }
           trendUp={null}
         />
         <MetricCard
-          title="Client Retention"
-          value="84%"
-          trend="-2% vs last month"
-          trendUp={false}
+          title="New Customers"
+          value={String(newCustomersToday)}
+          trend="Registered today"
+          trendUp={newCustomersToday > 0 ? true : null}
         />
       </section>
 
-      {/* Main Content Area */}
-      <section className="grid grid-cols-1 gap-12 border-t border-border/40 pt-8 lg:grid-cols-12">
-        <div className="lg:col-span-8">
-          <div className="mb-8 flex items-center justify-between">
-            <h2 className="font-heading text-3xl">Upcoming Appointments</h2>
-            <button className="text-xs font-medium tracking-widest text-muted-foreground uppercase transition-colors hover:text-accent">
-              View Schedule &rarr;
-            </button>
-          </div>
-          <AppointmentsList />
+      {/* Main Operational Feed Section */}
+      <section className="grid grid-cols-1 gap-8 border-t border-border/40 pt-8 lg:grid-cols-12">
+        <div className="lg:col-span-7">
+          <RecentOrders orders={recentOrders} />
         </div>
-
-        <div className="space-y-8 lg:col-span-4">
-          <div className="group relative overflow-hidden border border-border/50 bg-muted/30 p-8">
-            <div className="absolute top-0 right-0 p-4 opacity-5 transition-opacity duration-500 group-hover:opacity-10">
-              <svg
-                width="120"
-                height="120"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="0.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-              </svg>
-            </div>
-            <h3 className="relative z-10 mb-3 font-heading text-2xl">
-              Daily Goal
-            </h3>
-            <p className="relative z-10 mb-8 leading-relaxed text-muted-foreground">
-              You are <span className="font-medium text-foreground">$260</span>{' '}
-              away from your daily revenue target.
-            </p>
-            <div className="h-px w-full overflow-hidden bg-border">
-              <div className="h-full w-[82%] bg-accent" />
-            </div>
-            <p className="mt-3 text-right font-mono text-xs text-muted-foreground">
-              82%
-            </p>
-          </div>
-
-          <div className="border border-border/50 p-8">
-            <h3 className="mb-4 font-heading text-2xl">Quick Actions</h3>
-            <div className="flex flex-col gap-3">
-              <button className="border-b border-border/30 py-3 text-left text-sm transition-all hover:border-accent hover:text-accent">
-                + New Walk-in
-              </button>
-              <button className="border-b border-border/30 py-3 text-left text-sm transition-all hover:border-accent hover:text-accent">
-                Block Time
-              </button>
-              <button className="border-b border-border/30 py-3 text-left text-sm transition-all hover:border-accent hover:text-accent">
-                View Inventory
-              </button>
-            </div>
-          </div>
+        <div className="lg:col-span-5">
+          <RecentCustomers customers={recentCustomers} />
         </div>
       </section>
     </div>
